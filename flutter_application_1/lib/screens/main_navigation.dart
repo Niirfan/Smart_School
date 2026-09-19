@@ -3,9 +3,12 @@ import '../theme/app_theme.dart';
 import 'grades/grades_screen.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
+import 'qr/qr_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final String studentId;
+
+  const MainNavigationScreen({super.key, this.studentId = 'S001'});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -13,12 +16,18 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    GradesScreen(),
-    ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(studentId: widget.studentId),
+      QrScreen(studentId: widget.studentId),
+      GradesScreen(),
+      ProfileScreen(studentId: widget.studentId),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +68,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: 'หน้าหลัก',
             ),
             NavigationDestination(
+              icon: Icon(Icons.qr_code_outlined, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.qr_code_scanner, color: AppColors.primaryBlue),
+              label: 'QR Code',
+            ),
+            NavigationDestination(
               icon: Icon(Icons.stars_outlined, color: AppColors.textSecondary),
               selectedIcon: Icon(Icons.stars_rounded, color: AppColors.primaryBlue),
               label: 'ผลการเรียน',
@@ -74,4 +88,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
-

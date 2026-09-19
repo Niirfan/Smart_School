@@ -165,24 +165,30 @@ class ScheduleCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            size: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${item.timeRange}  •  ${item.room}',
-                            style: TextStyle(
-                              fontSize: 12,
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 13,
                               color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                '${item.timeRange}  •  ${item.room}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       _buildStatusBadge(item.status),
                     ],
                   ),
@@ -223,16 +229,19 @@ class ScheduleCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   // Teacher Name & Note
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.teacherName,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                      Flexible(
+                        child: Text(
+                          item.teacherName,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (item.note != null)
+                      if (item.note != null) ...[
+                        const SizedBox(width: 8),
                         Text(
                           item.note!,
                           style: TextStyle(
@@ -240,6 +249,7 @@ class ScheduleCard extends StatelessWidget {
                             color: AppColors.textSecondary,
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ],

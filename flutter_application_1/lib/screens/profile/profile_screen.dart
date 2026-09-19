@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../auth/login_screen.dart';
+import '../home/widgets/guardian_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String studentId;
@@ -24,6 +26,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _profileFuture = ApiService.getDashboard(studentId: widget.studentId);
     });
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.logout_rounded,
+                  color: AppColors.danger, size: 30),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'ออกจากระบบ?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'คุณต้องการออกจากระบบใช่หรือไม่?\nคุณจะต้องเข้าสู่ระบบใหม่อีกครั้ง',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'ยกเลิก',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx); // close dialog
+                    // ล้าง stack ทั้งหมด แล้วไปหน้า Login
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (c, a1, a2) => const LoginScreen(),
+                        transitionsBuilder: (c, anim, a2, child) =>
+                            FadeTransition(opacity: anim, child: child),
+                        transitionDuration:
+                            const Duration(milliseconds: 400),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: AppColors.danger,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'ออกจากระบบ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildInfoTile(IconData icon, String title, String subtitle) {
@@ -163,7 +266,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 42,
-                        backgroundImage: NetworkImage(student.avatarUrl),
+                        backgroundColor: const Color(0xFFE8EEFC),
+                        child: const Icon(
+                          Icons.person_rounded,
+                          size: 50,
+                          color: AppColors.primaryNavy,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -241,6 +349,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                // Guardian & Advisor Contact Card
+                GuardianContactCard(student: student),
+                const SizedBox(height: 16),
                 // Actions
                 Container(
                   decoration: BoxDecoration(
@@ -249,7 +360,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     border: Border.all(color: AppColors.border),
                   ),
                   child: ListTile(
-                    leading: const Icon(Icons.logout, color: AppColors.danger),
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.dangerBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.logout_rounded,
+                          color: AppColors.danger, size: 18),
+                    ),
                     title: const Text(
                       'ออกจากระบบ',
                       style: TextStyle(
@@ -258,13 +378,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 14,
                       ),
                     ),
+                    subtitle: Text(
+                      'กลับไปหน้าเข้าสู่ระบบ',
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.textSecondary),
+                    ),
                     trailing: const Icon(Icons.chevron_right,
                         color: AppColors.textSecondary),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('ออกจากระบบแล้ว')),
-                      );
-                    },
+                    onTap: () => _showLogoutDialog(),
                   ),
                 ),
                 const SizedBox(height: 24),

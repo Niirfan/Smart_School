@@ -74,6 +74,27 @@ class ApiService {
     }
   }
 
+  /// ดึงประวัติคะแนนพฤติกรรมทั้งหมดของนักเรียน
+  static Future<List<ConductRecord>> getConductHistory({String studentId = 'S001'}) async {
+    final url = '$baseUrl/api_conduct_history.php?student_id=$studentId';
+    final response = await http
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 5));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      if (json['success'] == true && json['records'] != null) {
+        return (json['records'] as List<dynamic>)
+            .map((e) => ConductRecord.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(json['message'] ?? 'ไม่พบข้อมูลประวัติพฤติกรรม');
+      }
+    } else {
+      throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
+    }
+  }
+
   /// ดึงตารางเรียนทั้งหมดของห้องเรียน (จากฐานข้อมูลจริงเท่านั้น)
   static Future<List<TimetableEntry>> getFullTimetable({String room = 'ม.1/1'}) async {
     final url = '$baseUrl/api_full_timetable.php?room=${Uri.encodeComponent(room)}';
@@ -97,6 +118,78 @@ class ApiService {
       } else {
         throw Exception(json['message'] ?? 'ไม่พบตารางเรียนในฐานข้อมูล');
       }
+    } else {
+      throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
+    }
+  }
+
+  /// Login นักเรียนด้วย student_id/password
+  static Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final url = '$baseUrl/api_login.php';
+    final response = await http
+        .post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'student_id': username, 'password': password}),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      return json;
+    } else {
+      throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
+    }
+  }
+
+  /// สมัครสมาชิกนักเรียนใหม่ (ตั้งรหัสผ่านครั้งแรก)
+  static Future<Map<String, dynamic>> register({
+    required String studentId,
+    required String password,
+  }) async {
+    final url = '$baseUrl/api_register.php';
+    final response = await http
+        .post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'student_id': studentId,
+            'password': password,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      return json;
+    } else {
+      throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
+    }
+  }
+
+  /// รีเซ็ตรหัสผ่านนักเรียน
+  static Future<Map<String, dynamic>> forgotPassword({
+    required String studentId,
+    required String newPassword,
+  }) async {
+    final url = '$baseUrl/api_forgot_password.php';
+    final response = await http
+        .post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'student_id': studentId,
+            'new_password': newPassword,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      return json;
     } else {
       throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
     }

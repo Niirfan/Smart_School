@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../models/conduct_model.dart';
 import '../../../theme/app_theme.dart';
+import 'conduct_history_screen.dart';
 
 class ConductCard extends StatelessWidget {
   final ConductModel conduct;
+  final String studentId;
 
-  const ConductCard({super.key, required this.conduct});
+  const ConductCard({super.key, required this.conduct, this.studentId = 'S001'});
 
   @override
   Widget build(BuildContext context) {
@@ -212,6 +214,40 @@ class ConductCard extends StatelessWidget {
               ),
             );
           }),
+          const SizedBox(height: 8),
+          // View full history button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ConductHistoryScreen(
+                      studentId: studentId,
+                      conduct: conduct,
+                    ),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                side: const BorderSide(color: Color(0xFFD97706)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.history, size: 16, color: Color(0xFFD97706)),
+              label: const Text(
+                'ดูประวัติทั้งหมด',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFD97706),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

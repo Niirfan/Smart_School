@@ -3,7 +3,6 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import 'widgets/attendance_card.dart';
 import 'widgets/conduct_card.dart';
-import 'widgets/guardian_card.dart';
 import 'widgets/schedule_card.dart';
 import 'widgets/student_card.dart';
 
@@ -203,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 14),
 
                   // 3. Conduct Score Card
-                  ConductCard(conduct: data.conduct),
+                  ConductCard(conduct: data.conduct, studentId: widget.studentId),
                   const SizedBox(height: 14),
 
                   // 4. Today's Schedule Card
@@ -211,10 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     scheduleItems: data.schedule,
                     room: data.student.classroom,
                   ),
-                  const SizedBox(height: 14),
-
-                  // 5. Guardian & Advisor Card
-                  GuardianContactCard(student: data.student),
                   const SizedBox(height: 24),
                 ],
               ),
