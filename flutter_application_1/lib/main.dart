@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'screens/main_navigation.dart';
+import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const SmartSchoolApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class SmartSchoolApp extends StatelessWidget {
+  const SmartSchoolApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return MaterialApp(
+      title: 'SmartSchool TH',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      home: const MainNavigationScreen(),
     );
   }
 }
+
