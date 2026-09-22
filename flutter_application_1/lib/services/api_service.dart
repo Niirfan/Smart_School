@@ -170,9 +170,10 @@ class ApiService {
     }
   }
 
-  /// รีเซ็ตรหัสผ่านนักเรียน
+  /// รีเซ็ตรหัสผ่านนักเรียน (ยืนยันตัวตนผ่าน Google Account Email)
   static Future<Map<String, dynamic>> forgotPassword({
     required String studentId,
+    required String email,
     required String newPassword,
   }) async {
     final url = '$baseUrl/api_forgot_password.php';
@@ -182,6 +183,7 @@ class ApiService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'student_id': studentId,
+            'email': email,
             'new_password': newPassword,
           }),
         )

@@ -6,8 +6,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $teacher_id = $_POST['teacher_id'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ? AND password = ?");
-    $stmt->bind_param("ss", $teacher_id, $password);
+    $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ?");
+    $stmt->bind_param("s", $teacher_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($res->num_rows === 0 || !password_verify($password, $res->fetch_assoc()['password'])) {
+    $error = "รหัสผ่านหรือรหัสครูไม่ถูกต้อง";
+} else {
+    // set session ตามเดิม
+}
     $stmt->execute();
     $result = $stmt->get_result();
 

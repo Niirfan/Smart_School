@@ -1,0 +1,331 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SmartSchool System API",
+    "description": "เอกสารและอินเทอร์เฟซทดสอบ API สำหรับระบบบริหารจัดการโรงเรียน SmartSchool (เวอร์ชันนักเรียนและครู)",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SmartSchool Developer Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://std.mcs.psu.ac.th/6620310131/html/Mobile/api",
+      "description": "1. PSU Production Server (/Mobile/api)"
+    },
+    {
+      "url": "../api",
+      "description": "2. Relative Path (../api)"
+    },
+    {
+      "url": "http://localhost/Smart_School/backend/api",
+      "description": "3. Local Server (http://localhost/Smart_School/backend/api)"
+    }
+  ],
+  "paths": {
+    "/api_login.php": {
+      "post": {
+        "summary": "เข้าสู่ระบบนักเรียน (Student Login)",
+        "description": "ตรวจสอบรหัสนักเรียนและรหัสผ่านเพื่อเข้าใช้งานแอปพลิเคชัน",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["student_id", "password"],
+                "properties": {
+                  "student_id": {
+                    "type": "string",
+                    "example": "S001",
+                    "description": "รหัสนักเรียน"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "123456",
+                    "description": "รหัสผ่าน"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ผลลัพธ์การเข้าสู่ระบบ",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "เข้าสู่ระบบสำเร็จ",
+                  "student": {
+                    "student_id": "S001",
+                    "name": "นายสมชาย สายลม",
+                    "room": "ม.4/1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_register.php": {
+      "post": {
+        "summary": "ลงทะเบียน / ตั้งรหัสผ่านครั้งแรก (Student Register)",
+        "description": "สำหรับนักเรียนที่เพิ่งเข้าใช้งานครั้งแรกเพื่อตั้งรหัสผ่านเข้าสู่ระบบ",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["student_id", "password"],
+                "properties": {
+                  "student_id": {
+                    "type": "string",
+                    "example": "S001"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "654321",
+                    "description": "รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ผลการลงทะเบียน",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "ลงทะเบียนสำเร็จ สามารถเข้าสู่ระบบได้เลย"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_forgot_password.php": {
+      "post": {
+        "summary": "รีเซ็ตรหัสผ่านผ่าน Google Account Verification",
+        "description": "ยืนยันตัวตนด้วย Google Email และตั้งรหัสผ่านใหม่",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["student_id", "email", "new_password"],
+                "properties": {
+                  "student_id": {
+                    "type": "string",
+                    "example": "S001"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "somchai@gmail.com",
+                    "description": "อีเมล Google ที่ผ่านการยืนยันตัวตนแล้ว"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "example": "newpass123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ผลลัพธ์การรีเซ็ตรหัสผ่าน",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "เปลี่ยนรหัสผ่านสำเร็จ",
+                  "name": "นายสมชาย สายลม"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_dashboard.php": {
+      "get": {
+        "summary": "ดึงข้อมูลภาพรวมแดชบอร์ด (Student Dashboard)",
+        "description": "ดึงข้อมูลประวัตินักเรียน ครูที่ปรึกษา สถิติการเข้าเรียน คะแนนความประพฤติ และตารางเรียน",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "query",
+            "required": false,
+            "description": "รหัสนักเรียน (ค่าเริ่มต้น: S001)",
+            "schema": {
+              "type": "string",
+              "default": "S001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ข้อมูลแดชบอร์ดครบถ้วน",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "student": {
+                      "id": "S001",
+                      "fullName": "นายสมชาย สายลม",
+                      "classroom": "ม.4/1",
+                      "gpax": 3.78,
+                      "advisorName": "ครูสมชาย ใจดี"
+                    },
+                    "attendance": {
+                      "percentage": 92.5,
+                      "presentCount": 37,
+                      "absentCount": 1
+                    },
+                    "conduct": {
+                      "currentScore": 100,
+                      "gradeLevel": "ดีเยี่ยม (ระดับ A)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_grades.php": {
+      "get": {
+        "summary": "ดึงข้อมูลผลการเรียนและเกรดเฉลี่ย (Grades & GPAX)",
+        "description": "ดึงผลการเรียนรายวิชาและคำนวณเกรดเฉลี่ยสะสม",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "S001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "รายการผลการเรียน",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "gpax": "3.75",
+                  "grades": [
+                    {
+                      "subject_code": "TH101",
+                      "subject_name": "ภาษาไทย 1",
+                      "credit": "1.5",
+                      "grade_result": "4.0"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_full_timetable.php": {
+      "get": {
+        "summary": "ดึงตารางเรียนแบบเต็ม (Full Timetable Schedule)",
+        "description": "ดึงตารางเรียนแบ่งตามวันในสัปดาห์สำหรับห้องเรียนของนักเรียน",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "S001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ข้อมูลตารางเรียนแยกตามวัน",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "room": "ม.4/1",
+                  "timetable": {
+                    "Monday": [],
+                    "Tuesday": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_conduct_history.php": {
+      "get": {
+        "summary": "ดึงประวัติความประพฤติอย่างละเอียด (Behavior History)",
+        "description": "ดึงรายการคะแนนความประพฤติที่ถูกตัด/เพิ่มทั้งหมด",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "S001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "รายการประวัติความประพฤติ",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "current_score": 95,
+                  "records": []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api_notifications.php": {
+      "get": {
+        "summary": "ดึงรายการแจ้งเตือนข่าวสาร (Notifications)",
+        "description": "ดึงประกาศและข่าวสารแจ้งเตือนสำหรับนักเรียน",
+        "responses": {
+          "200": {
+            "description": "รายการการแจ้งเตือน",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "notifications": []
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

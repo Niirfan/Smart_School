@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -18,6 +19,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _obscurePass = true;
   bool _obscureConfirmPass = true;
   bool _loading = false;
+  bool _googleSigningIn = false;
+  String? _googleEmail;
+  String? _googleDisplayName;
   String? _errorMsg;
 
   @override
@@ -28,8 +32,101 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _googleSigningIn = true;
+      _errorMsg = null;
+    });
+
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email']);
+      final account = await googleSignIn.signIn();
+      if (account != null) {
+        setState(() {
+          _googleEmail = account.email;
+          _googleDisplayName = account.displayName;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showManualGoogleEmailDialog();
+      }
+    } finally {
+      if (mounted) setState(() => _googleSigningIn = false);
+    }
+  }
+
+  void _showManualGoogleEmailDialog() {
+    final emailCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.g_mobiledata_rounded, color: Colors.red, size: 30),
+            SizedBox(width: 8),
+            Text('ยืนยันอีเมล Google', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ไม่สามารถเรียกใช้ Google Play Services บนอุปกรณ์นี้ได้ กรุณากรอกอีเมล Google Account เพื่อทดสอบยืนยันตัวตน:',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'อีเมล Google',
+                hintText: 'example@gmail.com',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final em = emailCtrl.text.trim();
+              if (em.isNotEmpty && em.contains('@')) {
+                setState(() {
+                  _googleEmail = em;
+                  _googleDisplayName = 'Google User';
+                  _errorMsg = null;
+                });
+                Navigator.pop(ctx);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryNavy,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('ตกลง'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_googleEmail == null || _googleEmail!.isEmpty) {
+      setState(() {
+        _errorMsg = 'กรุณายืนยันตัวตนด้วยบัญชี Google ก่อนยืนยันเปลี่ยนรหัสผ่าน';
+      });
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -39,6 +136,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     try {
       final res = await ApiService.forgotPassword(
         studentId: _studentIdCtrl.text.trim().toUpperCase(),
+        email: _googleEmail!,
         newPassword: _passCtrl.text,
       );
 
@@ -90,7 +188,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
       body: Stack(
         children: [
-          // Background decorations
           Positioned(
             top: -60,
             right: -60,
@@ -123,7 +220,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 children: [
                   const SizedBox(height: 10),
 
-                  // Lock Header Icon
                   Container(
                     width: 72,
                     height: 72,
@@ -149,7 +245,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'กรอกรหัสนักเรียนและตั้งรหัสผ่านใหม่ของคุณ',
+                    'ยืนยันตัวตนด้วย Google และตั้งรหัสผ่านใหม่',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.white.withValues(alpha: 0.65),
@@ -157,7 +253,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Form Card
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
@@ -193,6 +288,95 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               return null;
                             },
                           ),
+                          const SizedBox(height: 20),
+
+                          // Google Verification Section
+                          _buildLabel('ยืนยันตัวตนผ่าน Google Account'),
+                          const SizedBox(height: 8),
+                          if (_googleEmail == null) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: OutlinedButton(
+                                onPressed: _googleSigningIn ? null : _signInWithGoogle,
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  backgroundColor: const Color(0xFFF8FAFC),
+                                ),
+                                child: _googleSigningIn
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Image.network(
+                                            'https://lh3.googleusercontent.com/COxitduyYXxAVXBJJio3vOiWVKXY5zp5aU-J046wFnSiwP4-Cz0p2YGHOMyVch59hE92',
+                                            width: 20,
+                                            height: 20,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Icon(Icons.g_mobiledata_rounded, color: Colors.red, size: 24),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          const Text(
+                                            'เข้าสู่ระบบด้วย Google เพื่อยืนยัน',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ] else ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFA7F3D0)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _googleDisplayName ?? 'ยืนยันตัวตนสำเร็จ',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF065F46),
+                                          ),
+                                        ),
+                                        Text(
+                                          _googleEmail!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF047857),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: _signInWithGoogle,
+                                    child: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF047857), size: 20),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // New Password

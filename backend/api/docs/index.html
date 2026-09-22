@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartSchool Backend — Swagger UI Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css">
+  <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20190301/ourmid/pngtree-vector-school-icon-png-image_747168.jpg" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #fafafa;
+      font-family: 'Sukhumvit Set', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .topbar-wrapper img {
+      content: url('https://png.pngtree.com/png-vector/20190301/ourmid/pngtree-vector-school-icon-png-image_747168.jpg');
+      width: 32px;
+      height: 32px;
+    }
+    .swagger-ui .topbar {
+      background-color: #0F2C59;
+      padding: 12px 0;
+    }
+    .swagger-ui .topbar a {
+      max-width: 300px;
+    }
+    .custom-header {
+      background: linear-gradient(135deg, #0F2C59 0%, #1D58D8 100%);
+      color: white;
+      padding: 24px 32px;
+      box-shadow: 0 4px 20px rgba(15, 44, 89, 0.15);
+    }
+    .custom-header h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .custom-header p {
+      margin: 8px 0 0 0;
+      opacity: 0.85;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="custom-header">
+    <h1>🏫 SmartSchool System API Documentation</h1>
+    <p>ระบบเอกสารเชิงโต้ตอบสำหรับทดสอบและใช้งาน RESTful API ของระบบบริหารจัดการโรงเรียน SmartSchool</p>
+  </div>
+
+  <div id="swagger-ui"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js" charset="UTF-8"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js" charset="UTF-8"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "openapi.json",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        displayRequestDuration: true,
+        docExpansion: "list",
+        defaultModelsExpandDepth: 1
+      });
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>

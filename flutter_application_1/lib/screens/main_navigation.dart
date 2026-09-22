@@ -24,7 +24,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _screens = [
       HomeScreen(studentId: widget.studentId),
       QrScreen(studentId: widget.studentId),
-      GradesScreen(),
+      GradesScreen(studentId: widget.studentId), 
       ProfileScreen(studentId: widget.studentId),
     ];
   }
