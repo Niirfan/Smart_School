@@ -35,15 +35,19 @@ class StudentModel {
     required this.guardianPhone,
   });
 
+  String get studentId => id;
+  String get name => fullName;
+  String get room => classroom;
+
   factory StudentModel.fromJson(Map<String, dynamic> json) {
     return StudentModel(
-      id: json['id']?.toString() ?? '',
-      fullName: json['fullName'] ?? '',
-      classroom: json['classroom'] ?? '',
+      id: json['student_id']?.toString() ?? json['id']?.toString() ?? '',
+      fullName: json['name'] ?? json['fullName'] ?? '',
+      classroom: json['room'] ?? json['classroom'] ?? '',
       seatNumber: json['seatNumber'] is int
           ? json['seatNumber']
           : int.tryParse(json['seatNumber']?.toString() ?? '0') ?? 0,
-      schoolName: json['schoolName'] ?? '',
+      schoolName: json['schoolName'] ?? 'โรงเรียนสมาร์ทสคูล',
       gpax: (json['gpax'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? '',
       avatarUrl: json['avatarUrl'] ??

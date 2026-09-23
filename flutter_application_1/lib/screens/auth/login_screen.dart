@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../models/teacher_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../main_navigation.dart';
+import '../teacher/teacher_navigation.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
@@ -18,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _studentIdCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
+  bool _isTeacher = false;
   bool _obscure = true;
   bool _loading = false;
   String? _errorMsg;
@@ -57,34 +60,63 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      final result = await ApiService.login(
-        username: _studentIdCtrl.text.trim().toUpperCase(),
-        password: _passwordCtrl.text,
-      );
-
-      if (!mounted) return;
-
-      if (result['success'] == true) {
-        // api_login.php ส่ง { success: true, student: { student_id: ... } }
-        final studentId =
-            result['student']?['student_id']?.toString() ??
-            _studentIdCtrl.text.trim().toUpperCase();
-
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context2, a1, a2) =>
-                MainNavigationScreen(studentId: studentId),
-            transitionsBuilder: (context2, anim, a2, child) =>
-                FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
+      if (_isTeacher) {
+        // --- ครู Login ---
+        final result = await ApiService.teacherLogin(
+          teacherId: _studentIdCtrl.text.trim(),
+          password: _passwordCtrl.text,
         );
+
+        if (!mounted) return;
+
+        if (result['success'] == true && result['teacher'] != null) {
+          final teacher = TeacherModel.fromJson(result['teacher']);
+
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context2, a1, a2) =>
+                  TeacherNavigation(teacher: teacher),
+              transitionsBuilder: (context2, anim, a2, child) =>
+                  FadeTransition(opacity: anim, child: child),
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
+          );
+        } else {
+          setState(() {
+            _errorMsg = result['message'] ?? 'รหัสครูหรือรหัสผ่านไม่ถูกต้อง';
+          });
+        }
       } else {
-        setState(() {
-          _errorMsg =
-              result['message'] ?? 'รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง';
-        });
+        // --- นักเรียน Login ---
+        final result = await ApiService.login(
+          username: _studentIdCtrl.text.trim().toUpperCase(),
+          password: _passwordCtrl.text,
+        );
+
+        if (!mounted) return;
+
+        if (result['success'] == true) {
+          final studentId =
+              result['student']?['student_id']?.toString() ??
+              _studentIdCtrl.text.trim().toUpperCase();
+
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context2, a1, a2) =>
+                  MainNavigationScreen(studentId: studentId),
+              transitionsBuilder: (context2, anim, a2, child) =>
+                  FadeTransition(opacity: anim, child: child),
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
+          );
+        } else {
+          setState(() {
+            _errorMsg =
+                result['message'] ?? 'รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง';
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -220,28 +252,106 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'กรอกรหัสนักเรียนเพื่อเข้าใช้งาน',
+                                'เลือกบทบาทและกรอกข้อมูลเข้าใช้งาน',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 20),
 
-                              // Student ID field
-                              _buildLabel('รหัสนักเรียน'),
+                              // Role selector switch
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _isTeacher = false),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: !_isTeacher ? AppColors.primaryNavy : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.school,
+                                                size: 16,
+                                                color: !_isTeacher ? Colors.white : AppColors.textSecondary,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'นักเรียน',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: !_isTeacher ? Colors.white : AppColors.textSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _isTeacher = true),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: _isTeacher ? AppColors.primaryNavy : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.person_pin,
+                                                size: 16,
+                                                color: _isTeacher ? Colors.white : AppColors.textSecondary,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'คุณครู',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: _isTeacher ? Colors.white : AppColors.textSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Student/Teacher ID field
+                              _buildLabel(_isTeacher ? 'รหัสประจำตัวครู' : 'รหัสนักเรียน'),
                               const SizedBox(height: 8),
                               TextFormField(
                                 controller: _studentIdCtrl,
                                 textCapitalization:
                                     TextCapitalization.characters,
                                 decoration: _inputDecoration(
-                                  hint: 'เช่น S001',
-                                  icon: Icons.badge_outlined,
+                                  hint: _isTeacher ? 'เช่น T001, T002' : 'เช่น S001',
+                                  icon: _isTeacher ? Icons.badge : Icons.badge_outlined,
                                 ),
                                 validator: (v) =>
                                     (v == null || v.trim().isEmpty)
-                                        ? 'กรุณากรอกรหัสนักเรียน'
+                                        ? (_isTeacher ? 'กรุณากรอกรหัสประจำตัวครู' : 'กรุณากรอกรหัสนักเรียน')
                                         : null,
                               ),
                               const SizedBox(height: 20),

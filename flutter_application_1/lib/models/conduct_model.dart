@@ -11,12 +11,19 @@ class ConductRecord {
     required this.pointsChange,
   });
 
+  int get scoreChange => pointsChange;
+  String get reason => title;
+
   factory ConductRecord.fromJson(Map<String, dynamic> json) {
     return ConductRecord(
-      title: json['title'] ?? '',
-      date: json['date'] ?? '',
-      recordedBy: json['recordedBy'] ?? '',
-      pointsChange: json['pointsChange'] ?? 0,
+      title: json['reason'] ?? json['title'] ?? '',
+      date: json['date'] ?? json['created_at'] ?? '',
+      recordedBy: json['teacher_name'] ?? json['recordedBy'] ?? '',
+      pointsChange: json['score_change'] is int
+          ? json['score_change']
+          : json['pointsChange'] is int
+              ? json['pointsChange']
+              : int.tryParse(json['score_change']?.toString() ?? json['pointsChange']?.toString() ?? '0') ?? 0,
     );
   }
 }

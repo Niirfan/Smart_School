@@ -2,31 +2,48 @@
 session_start();
 include 'db.php';
 
+$error = '';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $teacher_id = $_POST['teacher_id'];
-    $password = $_POST['password'];
+    $teacher_id = trim($_POST['teacher_id'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ?");
-    $stmt->bind_param("s", $teacher_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    if ($res->num_rows === 0 || !password_verify($password, $res->fetch_assoc()['password'])) {
-    $error = "รหัสผ่านหรือรหัสครูไม่ถูกต้อง";
-} else {
-    // set session ตามเดิม
-}
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $teacher = $result->fetch_assoc();
-        $_SESSION['teacher_id'] = $teacher['teacher_id'];
-        $_SESSION['teacher_name'] = $teacher['name'];
-        header("Location: dashboard.php");
-        exit();
+    if ($teacher_id === '' || $password === '') {
+        $error = "กรุณากรอกรหัสครูและรหัสผ่าน";
     } else {
-        $error = "รหัสประจำตัวหรือรหัสผ่านไม่ถูกต้อง";
+        $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ?");
+        $stmt->bind_param("s", $teacher_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        if ($res->num_rows === 0) {
+            $error = "รหัสประจำตัวหรือรหัสผ่านไม่ถูกต้อง";
+        } else {
+            $teacher = $res->fetch_assoc();
+            $db_pass = $teacher['password'];
+
+            // รองรับทั้ง bcrypt hash และ plain text (ช่วง transition)
+            $is_valid = password_verify($password, $db_pass) || hash_equals($db_pass, $password);
+
+            if ($is_valid !== true) {
+                $error = "รหัสประจำตัวหรือรหัสผ่านไม่ถูกต้อง";
+            } else {
+                // login สำเร็จ - set session ที่นี่ที่เดียว ไม่มี execute ซ้ำ
+                $_SESSION['teacher_id'] = $teacher['teacher_id'];
+                $_SESSION['teacher_name'] = $teacher['name'];
+
+                // lazy migrate เป็น bcrypt ถ้ายังเป็น plain text
+                if (password_get_info($db_pass)['algo'] === null) {
+                    $new_hash = password_hash($password, PASSWORD_BCRYPT);
+                    $update = $conn->prepare("UPDATE teachers SET password = ? WHERE teacher_id = ?");
+                    $update->bind_param("ss", $new_hash, $teacher_id);
+                    $update->execute();
+                }
+
+                header("Location: dashboard.php");
+                exit();
+            }
+        }
     }
 }
 ?>
