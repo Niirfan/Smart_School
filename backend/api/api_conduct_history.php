@@ -37,7 +37,7 @@ try {
                 'title'        => isset($row['reason']) && !empty($row['reason']) ? $row['reason'] : 'บันทึกพฤติกรรม',
                 'date'         => date('d/m/Y', strtotime(isset($row['created_at']) ? $row['created_at'] : 'now')),
                 'recordedBy'   => isset($row['teacher_name']) && !empty($row['teacher_name']) ? $row['teacher_name'] : 'ครูประจำวิชา',
-                'pointsChange' => (int)(isset($row['score_change']) ? $row['score_change'] : 0),
+                'pointsChange' => round(floatval(isset($row['score_change']) ? $row['score_change'] : 0), 2),
             ];
         }
     }

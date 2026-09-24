@@ -31,7 +31,7 @@ CREATE TABLE `behaviors` (
   `behavior_id` varchar(50) NOT NULL,
   `student_id` varchar(50) NOT NULL,
   `teacher_id` varchar(50) NOT NULL,
-  `score_change` int(11) NOT NULL,
+  `score_change` decimal(6,2) NOT NULL,
   `reason` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

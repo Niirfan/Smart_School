@@ -34,7 +34,8 @@ class _ConductHistoryScreenState extends State<ConductHistoryScreen> {
     });
   }
 
-  Color _scoreColor(int score, int max) {
+  Color _scoreColor(num score, num max) {
+    if (max == 0) return const Color(0xFFDC2626);
     final pct = score / max;
     if (pct >= 0.8) return const Color(0xFF16A34A);
     if (pct >= 0.6) return const Color(0xFFD97706);

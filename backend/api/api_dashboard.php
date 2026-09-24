@@ -110,7 +110,7 @@ try {
     $att_percentage = $total_days > 0 ? round((($present + $late) / $total_days) * 100, 1) : 0;
 
     // 5. คะแนนความประพฤติ (behaviors)
-    $current_conduct_score = 100;
+    $current_conduct_score = 100.0;
     $recent_behaviors = [];
     try {
         $beh_sum_stmt = $conn->prepare("SELECT SUM(score_change) as total_change FROM behaviors WHERE student_id = ?");
@@ -118,8 +118,8 @@ try {
             $beh_sum_stmt->bind_param("s", $student_id);
             $beh_sum_stmt->execute();
             $beh_sum_res = $beh_sum_stmt->get_result()->fetch_assoc();
-            $score_change = $beh_sum_res['total_change'] !== null ? intval($beh_sum_res['total_change']) : 0;
-            $current_conduct_score = max(0, min(100, 100 + $score_change));
+            $score_change = $beh_sum_res['total_change'] !== null ? floatval($beh_sum_res['total_change']) : 0.0;
+            $current_conduct_score = round(max(0, min(100, 100 + $score_change)), 2);
         }
 
         // รายการความประพฤติล่าสุด
@@ -140,7 +140,7 @@ try {
                     'title' => $b['reason'] ?: 'บันทึกคะแนนความประพฤติ',
                     'date' => date('d M Y', strtotime($b['created_at'])),
                     'recordedBy' => $b['teacher_name'] ?: 'ครูเวรประจำวัน',
-                    'pointsChange' => intval($b['score_change']),
+                    'pointsChange' => round(floatval($b['score_change']), 2),
                 ];
             }
         }

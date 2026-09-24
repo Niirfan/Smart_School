@@ -8,13 +8,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
+date_default_timezone_set('Asia/Bangkok');
+
 include 'db.php';
 
 try {
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method === 'POST') {
-        // --- บันทึกเช็คชื่อจากสแกน QR (scan_in หรือ scan_out) ---
+        // --- บันทึกเช็คชื่อจากสแกน QR หรือกรอกรหัส (scan_in หรือ scan_out) ---
         $input = json_decode(file_get_contents('php://input'), true);
 
         $student_id = trim($input['student_id'] ?? '');
@@ -22,6 +24,14 @@ try {
         $date = trim($input['date'] ?? date('Y-m-d'));
         $scan_type = trim($input['scan_type'] ?? 'in'); // 'in' หรือ 'out'
         $status = trim($input['status'] ?? 'มาเรียน');
+
+        // รับค่าเวลาจาก client ถ้ามี (เช่น '08:10:00' หรือ '08:10') หากไม่มีให้ใช้เวลาปัจจุบันของเซิร์ฟเวอร์
+        $custom_time = trim($input['time'] ?? '');
+        if (!empty($custom_time)) {
+            $now_time = strlen($custom_time) === 5 ? $custom_time . ':00' : $custom_time;
+        } else {
+            $now_time = date('H:i:s');
+        }
 
         if (empty($student_id) || empty($teacher_id)) {
             echo json_encode(['success' => false, 'message' => 'ข้อมูลไม่ครบถ้วน'], JSON_UNESCAPED_UNICODE);
@@ -39,21 +49,25 @@ try {
         }
         $student = $res->fetch_assoc();
 
-        $now_time = date('H:i:s');
         $attendance_id = 'ATT' . date('YmdHis') . rand(100, 999);
 
-        // Ensure tables exist
-        $conn->query("CREATE TABLE IF NOT EXISTS behaviors (behavior_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), teacher_id VARCHAR(50), score_change DECIMAL(5,2), reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-        $conn->query("CREATE TABLE IF NOT EXISTS notifications (notification_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), title VARCHAR(255), message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        // Ensure tables exist & columns support decimal scores
+        @$conn->query("CREATE TABLE IF NOT EXISTS behaviors (behavior_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), teacher_id VARCHAR(50), score_change DECIMAL(6,2), reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        @$conn->query("ALTER TABLE behaviors MODIFY score_change DECIMAL(6,2) NOT NULL");
+        @$conn->query("ALTER TABLE daily_attendance MODIFY daily_status VARCHAR(50) DEFAULT 'มาเรียน'");
+        @$conn->query("CREATE TABLE IF NOT EXISTS notifications (notification_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), title VARCHAR(255), message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         $deduction_note = '';
 
         if ($scan_type === 'in') {
             // --- โลจิกคำนวณการมาสายเกิน 8 โมง หักนาทีละ 0.1 คะแนน ---
             $target_time = '08:00:00';
-            if (strtotime($now_time) > strtotime($target_time)) {
-                $status = 'สาย';
-                $late_seconds = strtotime($now_time) - strtotime($target_time);
+            $now_stamp = strtotime("1970-01-01 $now_time");
+            $target_stamp = strtotime("1970-01-01 $target_time");
+
+            if ($now_stamp > $target_stamp) {
+                $status = 'มาสาย';
+                $late_seconds = $now_stamp - $target_stamp;
                 $late_minutes = (int)ceil($late_seconds / 60);
                 $deduct_score = round($late_minutes * 0.1, 2);
 

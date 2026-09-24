@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('Asia/Bangkok');
+
 // กำหนดค่าการเชื่อมต่อฐานข้อมูล
 $host = "172.18.111.42"; 
 $user = "6620310131"; 

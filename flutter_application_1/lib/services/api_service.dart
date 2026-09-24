@@ -287,24 +287,30 @@ class ApiService {
     }
   }
 
-  /// บันทึกเช็คชื่อจากสแกน QR (daily_attendance)
+  /// บันทึกเช็คชื่อจากสแกน QR หรือกรอกรหัส (daily_attendance)
   static Future<Map<String, dynamic>> saveQrAttendance({
     required String studentId,
     required String teacherId,
     required String scanType, // 'in' หรือ 'out'
     String status = 'มาเรียน',
+    String? time,
   }) async {
     final url = '$baseUrl/api_teacher_attendance.php';
+    final Map<String, dynamic> body = {
+      'student_id': studentId,
+      'teacher_id': teacherId,
+      'scan_type': scanType,
+      'status': status,
+    };
+    if (time != null && time.trim().isNotEmpty) {
+      body['time'] = time.trim();
+    }
+
     final response = await http
         .post(
           Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'student_id': studentId,
-            'teacher_id': teacherId,
-            'scan_type': scanType,
-            'status': status,
-          }),
+          body: jsonEncode(body),
         )
         .timeout(const Duration(seconds: 10));
 

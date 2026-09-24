@@ -55,13 +55,20 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
       _isProcessing = true;
     });
 
+    final now = DateTime.now();
+    final clientCurrentTime =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+
     try {
       final res = await ApiService.saveQrAttendance(
         studentId: studentId,
         teacherId: widget.teacher.teacherId,
         scanType: _scanType,
         status: 'มาเรียน',
+        time: clientCurrentTime,
       );
+
+      _manualIdController.clear();
 
       if (mounted) {
         _showScanResultDialog(res, studentId);
@@ -318,10 +325,12 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
 
             const SizedBox(height: 20),
 
-            // Manual Input Section (สำหรับ Emulator / ทดสอบ)
+            // Manual Input Section (กรณีสแกนบัตรไม่ได้ หรือกล้องมีปัญหา)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -329,54 +338,72 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.edit, size: 18, color: AppColors.primaryBlue),
+                          const Icon(Icons.edit_note, size: 20, color: AppColors.primaryNavy),
                           const SizedBox(width: 8),
                           Text(
-                            'ป้อนรหัสนักเรียน (กรณีสแกนไม่ได้/ทดสอบ)',
+                            'กรอกรหัสนักเรียนแทน (กรณีสแกนบัตรไม่ได้)',
                             style: GoogleFonts.prompt(
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '⏱️ บันทึกตามเวลาที่กดทันที (สายเกิน 08:00 น. ตัดนาทีละ 0.1 คะแนนอัตโนมัติ)',
+                        style: GoogleFonts.prompt(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _manualIdController,
-                              decoration: InputDecoration(
-                                hintText: 'เช่น S001, S002',
-                                hintStyle: GoogleFonts.prompt(color: AppColors.textMuted, fontSize: 13),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: AppColors.border),
-                                ),
-                              ),
-                            ),
+                      TextField(
+                        controller: _manualIdController,
+                        decoration: InputDecoration(
+                          labelText: 'รหัสนักเรียน',
+                          labelStyle: GoogleFonts.prompt(fontSize: 13),
+                          hintText: 'เช่น S001 หรือ 6620310131',
+                          hintStyle: GoogleFonts.prompt(color: AppColors.textMuted, fontSize: 13),
+                          prefixIcon: const Icon(Icons.badge_outlined, size: 20, color: AppColors.primaryBlue),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: AppColors.border),
                           ),
-                          const SizedBox(width: 10),
-                          ElevatedButton.icon(
-                            onPressed: _isProcessing
-                                ? null
-                                : () {
-                                    final text = _manualIdController.text.trim();
-                                    if (text.isNotEmpty) {
-                                      _handleStudentScan(text);
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryNavy,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            icon: const Icon(Icons.send, size: 16, color: Colors.white),
-                            label: Text('บันทึก', style: GoogleFonts.prompt(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                        onSubmitted: (value) {
+                          final text = value.trim();
+                          if (text.isNotEmpty && !_isProcessing) {
+                            _handleStudentScan(text);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isProcessing
+                              ? null
+                              : () {
+                                  final text = _manualIdController.text.trim();
+                                  if (text.isNotEmpty) {
+                                    _handleStudentScan(text);
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryNavy,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                        ],
+                          icon: const Icon(Icons.send, size: 16, color: Colors.white),
+                          label: Text(
+                            'บันทึกเช็กชื่อ',
+                            style: GoogleFonts.prompt(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
                       ),
                     ],
                   ),

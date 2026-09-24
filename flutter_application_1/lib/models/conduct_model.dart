@@ -2,7 +2,7 @@ class ConductRecord {
   final String title;
   final String date;
   final String recordedBy;
-  final int pointsChange;
+  final num pointsChange;
 
   const ConductRecord({
     required this.title,
@@ -11,26 +11,30 @@ class ConductRecord {
     required this.pointsChange,
   });
 
-  int get scoreChange => pointsChange;
+  num get scoreChange => pointsChange;
   String get reason => title;
 
   factory ConductRecord.fromJson(Map<String, dynamic> json) {
+    num parsedPoints = 0;
+    final rawChange = json['score_change'] ?? json['pointsChange'];
+    if (rawChange is num) {
+      parsedPoints = rawChange;
+    } else if (rawChange != null) {
+      parsedPoints = num.tryParse(rawChange.toString()) ?? 0;
+    }
+
     return ConductRecord(
       title: json['reason'] ?? json['title'] ?? '',
       date: json['date'] ?? json['created_at'] ?? '',
       recordedBy: json['teacher_name'] ?? json['recordedBy'] ?? '',
-      pointsChange: json['score_change'] is int
-          ? json['score_change']
-          : json['pointsChange'] is int
-              ? json['pointsChange']
-              : int.tryParse(json['score_change']?.toString() ?? json['pointsChange']?.toString() ?? '0') ?? 0,
+      pointsChange: parsedPoints,
     );
   }
 }
 
 class ConductModel {
-  final int currentScore;
-  final int maxScore;
+  final num currentScore;
+  final num maxScore;
   final String gradeLevel;
   final List<ConductRecord> recentRecords;
 
@@ -47,9 +51,15 @@ class ConductModel {
             .toList() ??
         [];
 
+    final rawCurrent = json['currentScore'];
+    final parsedCurrent = rawCurrent is num ? rawCurrent : (num.tryParse(rawCurrent?.toString() ?? '100') ?? 100);
+
+    final rawMax = json['maxScore'];
+    final parsedMax = rawMax is num ? rawMax : (num.tryParse(rawMax?.toString() ?? '100') ?? 100);
+
     return ConductModel(
-      currentScore: json['currentScore'] ?? 0,
-      maxScore: json['maxScore'] ?? 100,
+      currentScore: parsedCurrent,
+      maxScore: parsedMax,
       gradeLevel: json['gradeLevel'] ?? '',
       recentRecords: list,
     );
