@@ -4,10 +4,11 @@ import '../../models/teacher_model.dart';
 import '../../models/schedule_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import 'teacher_navigation.dart';
 
 class TeacherHomeScreen extends StatefulWidget {
   final TeacherModel teacher;
-  final Function(int index)? onNavigateToTab;
+  final Function(TeacherTab tab)? onNavigateToTab;
 
   const TeacherHomeScreen({
     super.key,
@@ -118,7 +119,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'กลุ่มสาระ: ${widget.teacher.department ?? "ทั่วไป"}',
+                      'กลุ่มสาระ: ${widget.teacher.department ?? "ทั่วไป"}${widget.teacher.advisorRoom != null && widget.teacher.advisorRoom!.isNotEmpty ? " • ประจำชั้น ${widget.teacher.advisorRoom}" : ""}',
                       style: GoogleFonts.prompt(
                         color: Colors.amber.shade300,
                         fontSize: 12,
@@ -232,6 +233,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
 
             const SizedBox(height: 20),
 
+            if (data.advisorRoomStats != null) ...[
+              _buildAdvisorRoomOverview(data),
+              const SizedBox(height: 20),
+            ],
+
             // Quick Menu Section
             Text(
               'เมนูจัดการการสอน',
@@ -307,6 +313,61 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
     );
   }
 
+  Widget _buildAdvisorRoomOverview(TeacherDashboardData data) {
+    final stats = data.advisorRoomStats!;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'สรุปห้องที่ปรึกษา ${stats.room}',
+              style: GoogleFonts.prompt(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildMiniStatus('มาเรียน', stats.presentCount, Colors.green),
+                _buildMiniStatus('มาสาย', stats.lateCount, Colors.orange),
+                _buildMiniStatus('ลากิจ', stats.businessLeaveCount, Colors.blue),
+                _buildMiniStatus('ลาป่วย', stats.sickLeaveCount, Colors.indigo),
+                _buildMiniStatus('ขาด', stats.absentCount, Colors.red),
+                _buildMiniStatus('ยังไม่เช็คชื่อ', stats.notCheckedInCount, Colors.grey),
+              ],
+            ),
+            if (data.absentOrLeaveList.isNotEmpty) ...[
+              const Divider(height: 24),
+              Text('รายชื่อที่ต้องติดตาม', style: GoogleFonts.prompt(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              ...data.absentOrLeaveList.map((student) => ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(student.name, style: GoogleFonts.prompt(fontSize: 13)),
+                    subtitle: Text(student.studentId, style: GoogleFonts.prompt(fontSize: 11)),
+                    trailing: Text(student.status, style: GoogleFonts.prompt(fontSize: 12, color: AppColors.danger)),
+                  )),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniStatus(String label, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text('$label $count', style: GoogleFonts.prompt(fontSize: 12, color: color)),
+    );
+  }
+
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -316,7 +377,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
     required Color bgColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -332,47 +393,53 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: bgColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.prompt(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.prompt(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    value,
-                    style: GoogleFonts.prompt(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      value,
+                      style: GoogleFonts.prompt(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.prompt(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
+                    const SizedBox(width: 4),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.prompt(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -387,7 +454,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         'icon': Icons.qr_code_scanner,
         'color': AppColors.primaryBlue,
         'bgColor': AppColors.primaryLight,
-        'tabIndex': 1,
+        'tab': TeacherTab.qrScan,
       },
       {
         'title': 'เช็กชื่อคาบเรียน',
@@ -395,15 +462,24 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         'icon': Icons.how_to_reg,
         'color': AppColors.success,
         'bgColor': AppColors.successBg,
-        'tabIndex': 2,
+        'tab': TeacherTab.subjectAttendance,
       },
+      if (widget.teacher.isAdvisor)
+        {
+          'title': 'บันทึกลา',
+          'subtitle': 'ลาป่วย/ลากิจ',
+          'icon': Icons.event_busy,
+          'color': Colors.orange.shade800,
+          'bgColor': Colors.orange.shade50,
+          'tab': TeacherTab.leaveRequest,
+        },
       {
         'title': 'ข้อมูลผู้สอน',
         'subtitle': 'โปรไฟล์/ความประพฤติ',
         'icon': Icons.person_outline,
         'color': AppColors.purple,
         'bgColor': AppColors.purpleBg,
-        'tabIndex': 3,
+        'tab': TeacherTab.profile,
       },
     ];
 
@@ -422,7 +498,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         return InkWell(
           onTap: () {
             if (widget.onNavigateToTab != null) {
-              widget.onNavigateToTab!(item['tabIndex'] as int);
+              widget.onNavigateToTab!(item['tab'] as TeacherTab);
             }
           },
           borderRadius: BorderRadius.circular(14),
@@ -559,7 +635,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
             ElevatedButton(
               onPressed: () {
                 if (widget.onNavigateToTab != null) {
-                  widget.onNavigateToTab!(2); // ไปหน้าเช็กชื่อ
+                  widget.onNavigateToTab!(TeacherTab.subjectAttendance); // ไปหน้าเช็กชื่อ
                 }
               },
               style: ElevatedButton.styleFrom(

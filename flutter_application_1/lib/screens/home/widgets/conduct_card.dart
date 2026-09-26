@@ -11,6 +11,14 @@ class ConductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // เกณฑ์: คะแนนต่ำกว่า 80 ถือว่า "ไม่ผ่านเกณฑ์" ต้องเตือนด้วยสีแดง
+    final bool isBelowThreshold = conduct.currentScore < 80;
+
+    final Color scoreBoxBg = isBelowThreshold ? const Color(0xFFFFF1F2) : const Color(0xFFF1F5FD);
+    final Color scoreNumberColor = isBelowThreshold ? const Color(0xFFDC2626) : AppColors.primaryNavy;
+    final Color scoreIconColor = isBelowThreshold ? const Color(0xFFDC2626) : const Color(0xFF0F766E);
+    final IconData scoreIcon = isBelowThreshold ? Icons.warning_amber_rounded : Icons.thumb_up_alt_rounded;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -72,7 +80,7 @@ class ConductCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5FD),
+              color: scoreBoxBg,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -96,10 +104,10 @@ class ConductCard extends StatelessWidget {
                         children: [
                           TextSpan(
                             text: '${conduct.currentScore} ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primaryNavy,
+                              color: scoreNumberColor,
                             ),
                           ),
                           TextSpan(
@@ -113,6 +121,17 @@ class ConductCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (isBelowThreshold) ...[
+                      const SizedBox(height: 4),
+                      const Text(
+                        'ต่ำกว่าเกณฑ์ (ไม่ผ่านเกณฑ์)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFDC2626),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 Container(
@@ -129,9 +148,9 @@ class ConductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.thumb_up_alt_rounded,
-                    color: Color(0xFF0F766E),
+                  child: Icon(
+                    scoreIcon,
+                    color: scoreIconColor,
                     size: 24,
                   ),
                 ),
@@ -253,4 +272,3 @@ class ConductCard extends StatelessWidget {
     );
   }
 }
-

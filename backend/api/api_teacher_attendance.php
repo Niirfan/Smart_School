@@ -12,6 +12,18 @@ date_default_timezone_set('Asia/Bangkok');
 
 include 'db.php';
 
+function has_behavior_for_day(mysqli $conn, string $student_id, string $date, string $reason_prefix): bool
+{
+    $stmt = $conn->prepare(
+        "SELECT 1 FROM behaviors
+         WHERE student_id = ? AND DATE(created_at) = ? AND reason LIKE CONCAT(?, '%')
+         LIMIT 1"
+    );
+    $stmt->bind_param('sss', $student_id, $date, $reason_prefix);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
+}
+
 try {
     $method = $_SERVER['REQUEST_METHOD'];
 
@@ -21,17 +33,14 @@ try {
 
         $student_id = trim($input['student_id'] ?? '');
         $teacher_id = trim($input['teacher_id'] ?? '');
-        $date = trim($input['date'] ?? date('Y-m-d'));
+        // ใช้วันจาก Server เท่านั้น ป้องกันการส่งวันที่ย้อนหลังจาก Client
+        $date = date('Y-m-d');
         $scan_type = trim($input['scan_type'] ?? 'in'); // 'in' หรือ 'out'
         $status = trim($input['status'] ?? 'มาเรียน');
 
         // รับค่าเวลาจาก client ถ้ามี (เช่น '08:10:00' หรือ '08:10') หากไม่มีให้ใช้เวลาปัจจุบันของเซิร์ฟเวอร์
-        $custom_time = trim($input['time'] ?? '');
-        if (!empty($custom_time)) {
-            $now_time = strlen($custom_time) === 5 ? $custom_time . ':00' : $custom_time;
-        } else {
-            $now_time = date('H:i:s');
-        }
+        // ใช้เวลาจาก Server เท่านั้น ป้องกันการส่งเวลาเช้าปลอมจาก Client
+        $now_time = date('H:i:s');
 
         if (empty($student_id) || empty($teacher_id)) {
             echo json_encode(['success' => false, 'message' => 'ข้อมูลไม่ครบถ้วน'], JSON_UNESCAPED_UNICODE);
@@ -39,6 +48,27 @@ try {
         }
 
         // ตรวจว่า student_id มีจริง
+        // ตรวจสิทธิ์จากฐานข้อมูลจริง ไม่เชื่อ teacher_id จาก Client เพียงอย่างเดียว
+        $teacher_stmt = $conn->prepare(
+            "SELECT is_disciplinary, advisor_room FROM teachers WHERE teacher_id = ? LIMIT 1"
+        );
+        $teacher_stmt->bind_param("s", $teacher_id);
+        $teacher_stmt->execute();
+        $teacher = $teacher_stmt->get_result()->fetch_assoc();
+
+        if (!$teacher) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'ไม่พบข้อมูลครูผู้ทำรายการ'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+
+        $can_scan = (int)$teacher['is_disciplinary'] === 1 || !empty($teacher['advisor_room']);
+        if (!$can_scan) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'ครูผู้สอนไม่มีสิทธิ์สแกน QR นักเรียน'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+
         $stmt = $conn->prepare("SELECT student_id, name FROM students WHERE student_id = ?");
         $stmt->bind_param("s", $student_id);
         $stmt->execute();
@@ -55,7 +85,6 @@ try {
         @$conn->query("CREATE TABLE IF NOT EXISTS behaviors (behavior_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), teacher_id VARCHAR(50), score_change DECIMAL(6,2), reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
         @$conn->query("ALTER TABLE behaviors MODIFY score_change DECIMAL(6,2) NOT NULL");
         @$conn->query("ALTER TABLE daily_attendance MODIFY daily_status VARCHAR(50) DEFAULT 'มาเรียน'");
-        @$conn->query("CREATE TABLE IF NOT EXISTS notifications (notification_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), title VARCHAR(255), message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         $deduction_note = '';
 
@@ -75,16 +104,11 @@ try {
                 $reason = "มาสาย $late_minutes นาที (เข้าโรงเรียนเวลา $now_time)";
                 $neg_score = -$deduct_score;
 
+                if (!has_behavior_for_day($conn, $student_id, $date, 'มาสาย')) {
                 $stmt_b = $conn->prepare("INSERT INTO behaviors (behavior_id, student_id, teacher_id, score_change, reason) VALUES (?, ?, ?, ?, ?)");
                 $stmt_b->bind_param("sssds", $beh_id, $student_id, $teacher_id, $neg_score, $reason);
                 $stmt_b->execute();
-
-                $notif_id = 'NOTI' . date('YmdHis') . rand(100, 999);
-                $notif_title = "ถูกหักคะแนนความประพฤติ (มาสาย)";
-                $notif_msg = "เข้าโรงเรียนสาย $late_minutes นาที ถูกหัก $deduct_score คะแนน";
-                $stmt_n = $conn->prepare("INSERT INTO notifications (notification_id, student_id, title, message) VALUES (?, ?, ?, ?)");
-                $stmt_n->bind_param("ssss", $notif_id, $student_id, $notif_title, $notif_msg);
-                $stmt_n->execute();
+                }
 
                 $deduction_note = " (มาสาย $late_minutes นาที หัก $deduct_score คะแนน)";
             }
@@ -95,16 +119,11 @@ try {
                 $reason = "ขาดเรียนโดยไม่แจ้งลา";
                 $neg_score = -3.00;
 
+                if (!has_behavior_for_day($conn, $student_id, $date, 'ขาดเรียนโดยไม่แจ้งลา')) {
                 $stmt_b = $conn->prepare("INSERT INTO behaviors (behavior_id, student_id, teacher_id, score_change, reason) VALUES (?, ?, ?, ?, ?)");
                 $stmt_b->bind_param("sssds", $beh_id, $student_id, $teacher_id, $neg_score, $reason);
                 $stmt_b->execute();
-
-                $notif_id = 'NOTI' . date('YmdHis') . rand(100, 999);
-                $notif_title = "ถูกหักคะแนนความประพฤติ (ขาดเรียน)";
-                $notif_msg = "ขาดเรียนโดยไม่แจ้งลา ถูกหัก 3.0 คะแนน";
-                $stmt_n = $conn->prepare("INSERT INTO notifications (notification_id, student_id, title, message) VALUES (?, ?, ?, ?)");
-                $stmt_n->bind_param("ssss", $notif_id, $student_id, $notif_title, $notif_msg);
-                $stmt_n->execute();
+                }
 
                 $deduction_note = " (ขาดเรียน หัก 3.0 คะแนน)";
             }
@@ -129,16 +148,11 @@ try {
                 $reason = "ไม่สแกนเข้าโรงเรียน (สแกนเฉพาะออก)";
                 $neg_score = -3.00;
 
+                if (!has_behavior_for_day($conn, $student_id, $date, 'ไม่สแกนเข้าโรงเรียน')) {
                 $stmt_b = $conn->prepare("INSERT INTO behaviors (behavior_id, student_id, teacher_id, score_change, reason) VALUES (?, ?, ?, ?, ?)");
                 $stmt_b->bind_param("sssds", $beh_id, $student_id, $teacher_id, $neg_score, $reason);
                 $stmt_b->execute();
-
-                $notif_id = 'NOTI' . date('YmdHis') . rand(100, 999);
-                $notif_title = "ถูกหักคะแนนความประพฤติ (ไม่สแกนเข้า/ออก)";
-                $notif_msg = "ไม่สแกนเข้าโรงเรียน ถูกหัก 3.0 คะแนน";
-                $stmt_n = $conn->prepare("INSERT INTO notifications (notification_id, student_id, title, message) VALUES (?, ?, ?, ?)");
-                $stmt_n->bind_param("ssss", $notif_id, $student_id, $notif_title, $notif_msg);
-                $stmt_n->execute();
+                }
 
                 $deduction_note = " (ไม่สแกนเข้า หัก 3.0 คะแนน)";
             }

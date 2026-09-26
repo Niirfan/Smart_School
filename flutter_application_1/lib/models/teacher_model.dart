@@ -6,6 +6,7 @@ class TeacherModel {
   final String? address;
   final String? bloodGroup;
   final bool isDisciplinary;
+  final String? advisorRoom; // ← เพิ่มใหม่
 
   const TeacherModel({
     required this.teacherId,
@@ -15,6 +16,7 @@ class TeacherModel {
     this.address,
     this.bloodGroup,
     this.isDisciplinary = false,
+    this.advisorRoom,
   });
 
   factory TeacherModel.fromJson(Map<String, dynamic> json) {
@@ -28,8 +30,12 @@ class TeacherModel {
       isDisciplinary: (json['is_disciplinary'] == 1 ||
           json['is_disciplinary'] == '1' ||
           json['is_disciplinary'] == true),
+      advisorRoom: json['advisor_room']?.toString(), // null ถ้าไม่ได้เป็นที่ปรึกษา
     );
   }
+
+  /// เป็นครูที่ปรึกษาหรือไม่ (มี advisor_room ที่ไม่ว่าง)
+  bool get isAdvisor => advisorRoom != null && advisorRoom!.isNotEmpty;
 
   Map<String, dynamic> toJson() {
     return {
@@ -40,6 +46,7 @@ class TeacherModel {
       'address': address,
       'blood_group': bloodGroup,
       'is_disciplinary': isDisciplinary ? 1 : 0,
+      'advisor_room': advisorRoom,
     };
   }
 }

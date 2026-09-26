@@ -1,10 +1,12 @@
 class ConductRecord {
+  final String studentId;
   final String title;
   final String date;
   final String recordedBy;
   final num pointsChange;
 
   const ConductRecord({
+    this.studentId = '',
     required this.title,
     required this.date,
     required this.recordedBy,
@@ -24,6 +26,7 @@ class ConductRecord {
     }
 
     return ConductRecord(
+      studentId: json['student_id']?.toString() ?? json['studentId']?.toString() ?? '',
       title: json['reason'] ?? json['title'] ?? '',
       date: json['date'] ?? json['created_at'] ?? '',
       recordedBy: json['teacher_name'] ?? json['recordedBy'] ?? '',

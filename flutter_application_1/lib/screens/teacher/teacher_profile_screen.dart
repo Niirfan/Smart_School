@@ -141,13 +141,6 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             const SizedBox(height: 20),
 
             // Conduct Recording Form (ฝ่ายปกครอง)
-            _buildConductForm(),
-
-            const SizedBox(height: 20),
-
-            // History Section
-            _buildHistorySection(),
-
             const SizedBox(height: 30),
 
             // Logout Button
@@ -244,54 +237,55 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     );
   }
 
-  Widget _buildConductForm() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.gavel, color: AppColors.danger, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'บันทึกคะแนนความประพฤตินักเรียน',
-                  style: GoogleFonts.prompt(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            if (!widget.teacher.isDisciplinary) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.warningBg,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.warning),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: AppColors.warning, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'เฉพาะครูฝ่ายปกครองเท่านั้นที่สามารถปรับเปลี่ยนคะแนนความประพฤติได้',
-                        style: GoogleFonts.prompt(fontSize: 11, color: AppColors.textPrimary),
-                      ),
-                    ),
-                  ],
+Widget _buildConductForm() {
+  return Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.gavel, color: AppColors.danger, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'บันทึกคะแนนความประพฤตินักเรียน',
+                style: GoogleFonts.prompt(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
-            const SizedBox(height: 14),
+          ),
+          const SizedBox(height: 12),
+
+          // ถ้าไม่ใช่ฝ่ายปกครอง -> โชว์แค่ข้อความแจ้งเตือน แล้วจบ ไม่แสดงฟอร์มเลย
+          if (!widget.teacher.isDisciplinary)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.warningBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.warning),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: AppColors.warning, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'เฉพาะครูฝ่ายปกครองเท่านั้นที่สามารถปรับเปลี่ยนคะแนนความประพฤติได้',
+                      style: GoogleFonts.prompt(fontSize: 11, color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            // ฟอร์มทั้งหมดจะแสดงเฉพาะฝ่ายปกครองเท่านั้น
             TextField(
               controller: _studentIdController,
-              enabled: widget.teacher.isDisciplinary,
               decoration: InputDecoration(
                 labelText: 'รหัสนักเรียน (เช่น S001)',
                 labelStyle: GoogleFonts.prompt(fontSize: 13),
@@ -301,31 +295,24 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             ),
             const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
-            Text('ระบุการปรับคะแนน (บวก/ลบ ทศนิยมได้ตามต้องการ):', style: GoogleFonts.prompt(fontSize: 13, color: AppColors.textSecondary)),
+            Text('ระบุการปรับคะแนน (บวก/ลบ ทศนิยมได้ตามต้องการ):',
+                style: GoogleFonts.prompt(fontSize: 13, color: AppColors.textSecondary)),
             const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _scoreInputController,
-                    enabled: widget.teacher.isDisciplinary,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: InputDecoration(
-                      hintText: 'เช่น -0.1, -1.5, -3, +10',
-                      hintStyle: GoogleFonts.prompt(fontSize: 13, color: AppColors.textMuted),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onChanged: (val) {
-                      final parsed = num.tryParse(val);
-                      if (parsed != null) {
-                        setState(() => _scoreChange = parsed);
-                      }
-                    },
-                  ),
-                ),
-              ],
+            TextField(
+              controller: _scoreInputController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+              decoration: InputDecoration(
+                hintText: 'เช่น -0.1, -1.5, -3, +10',
+                hintStyle: GoogleFonts.prompt(fontSize: 13, color: AppColors.textMuted),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onChanged: (val) {
+                final parsed = num.tryParse(val);
+                if (parsed != null) {
+                  setState(() => _scoreChange = parsed);
+                }
+              },
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -342,11 +329,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 _buildScoreChip(10, '+10', AppColors.success),
               ],
             ),
-
             const SizedBox(height: 12),
             TextField(
               controller: _reasonController,
-              enabled: widget.teacher.isDisciplinary,
               maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'สาเหตุ / รายละเอียด (เช่น แต่งกายผิดระเบียบ)',
@@ -355,19 +340,20 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
-
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 44,
               child: ElevatedButton.icon(
-                onPressed: (widget.teacher.isDisciplinary && !_isSavingConduct) ? _saveConduct : null,
+                onPressed: _isSavingConduct ? null : _saveConduct,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.danger,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 icon: _isSavingConduct
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Icon(Icons.send, color: Colors.white, size: 18),
                 label: Text(
                   _isSavingConduct ? 'กำลังบันทึก...' : 'บันทึกคะแนนความประพฤติ',
@@ -376,11 +362,11 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
               ),
             ),
           ],
-        ),
+        ],
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildScoreChip(num value, String label, Color color) {
     final isSelected = _scoreChange == value;
     return ChoiceChip(

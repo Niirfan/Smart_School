@@ -5,6 +5,7 @@ enum ClassStatus {
 }
 
 class ScheduleItem {
+  final String? scheduleId; // ← เพิ่มใหม่ (nullable เพื่อไม่กระทบโค้ดเดิมที่ใช้ฝั่งนักเรียน)
   final String timeRange;
   final String room;
   final String subjectName;
@@ -14,6 +15,7 @@ class ScheduleItem {
   final String? note;
 
   const ScheduleItem({
+    this.scheduleId,
     required this.timeRange,
     required this.room,
     required this.subjectName,
@@ -33,6 +35,7 @@ class ScheduleItem {
     }
 
     return ScheduleItem(
+      scheduleId: json['scheduleId']?.toString(),
       timeRange: json['timeRange'] ?? '',
       room: json['room'] ?? '',
       subjectName: json['subjectName'] ?? '',

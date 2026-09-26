@@ -12,10 +12,13 @@ include 'db.php';
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
-    $student_id = isset($input['student_id']) ? trim(strtoupper($input['student_id'])) : '';
+    $account_type = strtolower(trim($input['account_type'] ?? 'student'));
+    $account_id = isset($input['account_id'])
+        ? trim(strtoupper($input['account_id']))
+        : trim(strtoupper($input['student_id'] ?? ''));
     $password   = isset($input['password'])   ? $input['password'] : '';
 
-    if (empty($student_id) || empty($password)) {
+    if (!in_array($account_type, ['student', 'teacher'], true) || empty($account_id) || empty($password)) {
         echo json_encode([
             'success' => false,
             'message' => 'กรุณากรอกรหัสนักเรียนและรหัสผ่าน'
@@ -31,28 +34,39 @@ try {
         exit();
     }
 
-    $check = $conn->prepare("SELECT student_id FROM students WHERE student_id = ?");
+    $table = $account_type === 'teacher' ? 'teachers' : 'students';
+    $id_column = $account_type === 'teacher' ? 'teacher_id' : 'student_id';
+    $check = $conn->prepare("SELECT $id_column, is_registered FROM $table WHERE $id_column = ?");
     if (!$check) {
         throw new Exception("คำสั่ง SQL ตรวจสอบนักเรียนผิดพลาด: " . $conn->error);
     }
-    $check->bind_param("s", $student_id);
+    $check->bind_param("s", $account_id);
     $check->execute();
     $res = $check->get_result();
 
     if ($res->num_rows === 0) {
         echo json_encode([
             'success' => false,
-            'message' => 'ไม่พบรหัสนักเรียน "' . $student_id . '" ในระบบ กรุณาติดต่อครูผู้ดูแล'
+            'message' => 'ไม่พบรหัสประจำตัว "' . $account_id . '" ในระบบ กรุณาติดต่อครูผู้ดูแล'
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+
+    $account = $res->fetch_assoc();
+    if ((int)($account['is_registered'] ?? 0) === 1) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'รหัสประจำตัวนี้ลงทะเบียนแล้ว หากลืมรหัสผ่านให้ติดต่อผู้ดูแลระบบ'
         ], JSON_UNESCAPED_UNICODE);
         exit();
     }
 
     $hashed = password_hash($password, PASSWORD_BCRYPT);
-    $stmt = $conn->prepare("UPDATE students SET password = ? WHERE student_id = ?");
+    $stmt = $conn->prepare("UPDATE $table SET password = ?, is_registered = 1 WHERE $id_column = ?");
     if (!$stmt) {
         throw new Exception("คำสั่ง SQL อัปเดตรหัสผ่านผิดพลาด: " . $conn->error);
     }
-    $stmt->bind_param("ss", $hashed, $student_id);
+    $stmt->bind_param("ss", $hashed, $account_id);
 
     if ($stmt->execute()) {
         echo json_encode([

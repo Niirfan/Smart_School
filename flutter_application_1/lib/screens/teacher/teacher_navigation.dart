@@ -5,7 +5,11 @@ import '../../theme/app_theme.dart';
 import 'teacher_home_screen.dart';
 import 'teacher_qr_scanner_screen.dart';
 import 'teacher_attendance_screen.dart';
+import 'teacher_leave_screen.dart'; // ← ไฟล์ใหม่ที่จะสร้างในขั้นถัดไป
+import 'teacher_conduct_screen.dart';
 import 'teacher_profile_screen.dart';
+
+enum TeacherTab { home, qrScan, subjectAttendance, leaveRequest, conduct, profile }
 
 class TeacherNavigation extends StatefulWidget {
   final TeacherModel teacher;
@@ -20,34 +24,91 @@ class TeacherNavigation extends StatefulWidget {
 }
 
 class _TeacherNavigationState extends State<TeacherNavigation> {
-  int _currentIndex = 0;
-
-  late final List<Widget> _screens;
+  late TeacherTab _currentTab;
+  late final List<_NavEntry> _entries;
 
   @override
   void initState() {
     super.initState();
-    _screens = [
-      TeacherHomeScreen(
-        teacher: widget.teacher,
-        onNavigateToTab: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+    _currentTab = TeacherTab.home;
+
+    final teacher = widget.teacher;
+    // เงื่อนไขการมองเห็น ตามสิทธิ์ของครูแต่ละคน
+    final canScanQr = teacher.isDisciplinary || teacher.isAdvisor;
+    final canRecordLeave = teacher.isAdvisor;
+
+    _entries = [
+      _NavEntry(
+        tab: TeacherTab.home,
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home,
+        label: 'หน้าหลัก',
+        visible: true,
+        builder: () => TeacherHomeScreen(
+          teacher: teacher,
+          onNavigateToTab: _goToTab,
+        ),
       ),
-      TeacherQrScannerScreen(teacher: widget.teacher),
-      TeacherAttendanceScreen(teacher: widget.teacher),
-      TeacherProfileScreen(teacher: widget.teacher),
+      _NavEntry(
+        tab: TeacherTab.qrScan,
+        icon: Icons.qr_code_scanner_outlined,
+        activeIcon: Icons.qr_code_scanner,
+        label: 'สแกน QR',
+        visible: canScanQr, // ซ่อนถ้าไม่ใช่ที่ปรึกษาและไม่ใช่ฝ่ายปกครอง
+        builder: () => TeacherQrScannerScreen(teacher: teacher),
+      ),
+      _NavEntry(
+        tab: TeacherTab.subjectAttendance,
+        icon: Icons.how_to_reg_outlined,
+        activeIcon: Icons.how_to_reg,
+        label: 'เช็คชื่อ',
+        visible: true, // ครูทุกคนเช็คชื่อคาบที่ตัวเองสอนได้
+        builder: () => TeacherAttendanceScreen(teacher: teacher),
+      ),
+      _NavEntry(
+        tab: TeacherTab.leaveRequest,
+        icon: Icons.event_busy_outlined,
+        activeIcon: Icons.event_busy,
+        label: 'บันทึกลา',
+        visible: canRecordLeave, // เฉพาะครูที่ปรึกษาเท่านั้น
+        builder: () => TeacherLeaveScreen(teacher: teacher),
+      ),
+      _NavEntry(
+        tab: TeacherTab.conduct,
+        icon: Icons.gavel_outlined,
+        activeIcon: Icons.gavel,
+        label: 'คะแนนพฤติกรรม',
+        visible: teacher.isDisciplinary,
+        builder: () => TeacherConductScreen(teacher: teacher),
+      ),
+      _NavEntry(
+        tab: TeacherTab.profile,
+        icon: Icons.person_outline,
+        activeIcon: Icons.person,
+        label: 'ข้อมูลผู้สอน',
+        visible: true,
+        builder: () => TeacherProfileScreen(teacher: teacher),
+      ),
     ];
+  }
+
+  List<_NavEntry> get _visibleEntries => _entries.where((e) => e.visible).toList();
+
+  void _goToTab(TeacherTab tab) {
+    final target = _entries.firstWhere((e) => e.tab == tab);
+    if (!target.visible) return; // กันเผื่อมีที่เรียกไปยังแท็บที่ถูกซ่อนไว้
+    setState(() => _currentTab = tab);
   }
 
   @override
   Widget build(BuildContext context) {
+    final visible = _visibleEntries;
+    final currentIndex = visible.indexWhere((e) => e.tab == _currentTab);
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+        index: currentIndex < 0 ? 0 : currentIndex,
+        children: visible.map((e) => e.builder()).toList(),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -61,12 +122,8 @@ class _TeacherNavigationState extends State<TeacherNavigation> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+          currentIndex: currentIndex < 0 ? 0 : currentIndex,
+          onTap: (index) => setState(() => _currentTab = visible[index].tab),
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           selectedItemColor: AppColors.primaryNavy,
@@ -74,30 +131,33 @@ class _TeacherNavigationState extends State<TeacherNavigation> {
           selectedLabelStyle: GoogleFonts.prompt(fontSize: 11, fontWeight: FontWeight.bold),
           unselectedLabelStyle: GoogleFonts.prompt(fontSize: 10),
           elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'หน้าหลัก',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.qr_code_scanner_outlined),
-              activeIcon: Icon(Icons.qr_code_scanner),
-              label: 'สแกน QR',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.how_to_reg_outlined),
-              activeIcon: Icon(Icons.how_to_reg),
-              label: 'มาเรียน',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'ข้อมูลผู้สอน',
-            ),
-          ],
+          items: visible
+              .map((e) => BottomNavigationBarItem(
+                    icon: Icon(e.icon),
+                    activeIcon: Icon(e.activeIcon),
+                    label: e.label,
+                  ))
+              .toList(),
         ),
       ),
     );
   }
+}
+
+class _NavEntry {
+  final TeacherTab tab;
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool visible;
+  final Widget Function() builder;
+
+  _NavEntry({
+    required this.tab,
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.visible,
+    required this.builder,
+  });
 }

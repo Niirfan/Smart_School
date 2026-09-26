@@ -58,7 +58,7 @@ CREATE TABLE `daily_attendance` (
   `date` date NOT NULL,
   `scan_in_time` time DEFAULT NULL,
   `scan_out_time` time DEFAULT NULL,
-  `daily_status` enum('มาเรียน','มาสาย','ลา','ขาด') DEFAULT NULL
+  `daily_status` enum('มาเรียน','มาสาย','ลาป่วย','ลากิจ','ลา','ขาด') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -128,6 +128,7 @@ CREATE TABLE `students` (
   `blood_group` varchar(5) DEFAULT NULL,
   `parent_name` varchar(100) DEFAULT NULL,
   `parent_phone_number` varchar(20) DEFAULT NULL,
+  `advisor_teacher_id` varchar(50) DEFAULT NULL,
   `line_user_id` varchar(100) DEFAULT NULL,
   `is_line_linked` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -207,14 +208,15 @@ CREATE TABLE `teachers` (
   `phone_number` varchar(20) DEFAULT NULL,
   `address` text DEFAULT NULL,
   `blood_group` varchar(5) DEFAULT NULL,
-  `is_disciplinary` tinyint(1) DEFAULT 0
+  `is_disciplinary` tinyint(1) DEFAULT 0,
+  `advisor_room` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `teachers`
 --
 
-INSERT INTO `teachers` (`teacher_id`, `password`, `name`, `department`, `phone_number`, `address`, `blood_group`, `is_disciplinary`) VALUES
+INSERT INTO `teachers` (`teacher_id`, `password`, `name`, `department`, `phone_number`, `address`, `blood_group`, `is_disciplinary`, `advisor_room`) VALUES
 ('T001', '123456', 'ครูสมชาย ใจดี', 'คณิตศาสตร์', '081-111-1111', '12 หมู่ 3 ต.บ้านโพธิ์ อ.เมือง จ.ปัตตานี', 'O', 0),
 ('T002', '123456', 'ครูสุดา รักเรียน', 'ภาษาไทย', '081-222-2222', '45 หมู่ 1 ต.ยะรัง อ.ยะรัง จ.ปัตตานี', 'A', 0),
 ('T003', '123456', 'ครูอานนท์ ตั้งใจสอน', 'วิทยาศาสตร์', '081-333-3333', '78 หมู่ 5 ต.สะบารัง อ.เมือง จ.ปัตตานี', 'B', 1);

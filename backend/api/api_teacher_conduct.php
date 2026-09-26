@@ -56,7 +56,6 @@ try {
 
         // Auto create tables if not exists
         $conn->query("CREATE TABLE IF NOT EXISTS behaviors (behavior_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), teacher_id VARCHAR(50), score_change DECIMAL(5,2), reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-        $conn->query("CREATE TABLE IF NOT EXISTS notifications (notification_id VARCHAR(50) PRIMARY KEY, student_id VARCHAR(50), title VARCHAR(255), message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         $behavior_id = 'BEH' . date('YmdHis') . rand(100, 999);
 
@@ -65,18 +64,6 @@ try {
             VALUES (?, ?, ?, ?, ?)
         ");
         $stmt->bind_param("sssds", $behavior_id, $student_id, $teacher_id, $score_change, $reason);
-        $stmt->execute();
-
-        // --- สร้าง notification แจ้งนักเรียน (ตามที่แผนระบุว่าต้องแสดงในแอปนักเรียน) ---
-        $notif_id = 'NOTI' . date('YmdHis') . rand(100, 999);
-        $notif_title = $score_change >= 0 ? 'ได้รับคะแนนความประพฤติเพิ่ม' : 'ถูกหักคะแนนความประพฤติ';
-        $notif_message = "$reason (" . ($score_change >= 0 ? '+' : '') . "$score_change คะแนน)";
-
-        $stmt = $conn->prepare("
-            INSERT INTO notifications (notification_id, student_id, title, message)
-            VALUES (?, ?, ?, ?)
-        ");
-        $stmt->bind_param("ssss", $notif_id, $student_id, $notif_title, $notif_message);
         $stmt->execute();
 
         echo json_encode([

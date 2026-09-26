@@ -56,6 +56,14 @@ try {
 
     unset($student['password']); // ซ่อนรหัสผ่านไม่ส่งกลับไป
 
+    // Auto-migrate รหัสผ่าน Plain Text เป็น BCrypt หลัง Login สำเร็จ
+    if (password_get_info($db_pass)['algo'] === null) {
+        $new_hash = password_hash($password, PASSWORD_BCRYPT);
+        $update = $conn->prepare("UPDATE students SET password = ? WHERE student_id = ?");
+        $update->bind_param("ss", $new_hash, $student_id);
+        $update->execute();
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'เข้าสู่ระบบสำเร็จ',

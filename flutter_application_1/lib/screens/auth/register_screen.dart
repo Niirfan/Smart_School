@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   bool _obscurePass = true;
   bool _obscureConfirm = true;
+  bool _isTeacher = false;
   bool _loading = false;
   String? _errorMsg;
 
@@ -60,6 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       final result = await ApiService.register(
         studentId: _studentIdCtrl.text.trim().toUpperCase(),
         password: _passwordCtrl.text,
+        accountType: _isTeacher ? 'teacher' : 'student',
       );
 
       if (!mounted) return;
@@ -268,19 +270,29 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // ── รหัสนักเรียน ──────────────
-                                    _buildLabel('รหัสนักเรียน'),
+                                    SegmentedButton<bool>(
+                                      segments: const [
+                                        ButtonSegment(value: false, label: Text('นักเรียน'), icon: Icon(Icons.school_outlined)),
+                                        ButtonSegment(value: true, label: Text('ครู'), icon: Icon(Icons.person_outline)),
+                                      ],
+                                      selected: {_isTeacher},
+                                      onSelectionChanged: (value) => setState(() => _isTeacher = value.first),
+                                      showSelectedIcon: false,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _buildLabel(_isTeacher ? 'รหัสครู' : 'รหัสนักเรียน'),
                                     const SizedBox(height: 8),
                                     TextFormField(
                                       controller: _studentIdCtrl,
                                       textCapitalization:
                                           TextCapitalization.characters,
                                       decoration: _inputDecoration(
-                                        hint: 'เช่น S001',
+                                        hint: _isTeacher ? 'เช่น T001' : 'เช่น S001',
                                         icon: Icons.badge_outlined,
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'กรุณากรอกรหัสนักเรียน'
+                                              ? 'กรุณากรอกรหัสประจำตัว'
                                               : null,
                                     ),
                                     const SizedBox(height: 20),

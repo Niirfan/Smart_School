@@ -25,8 +25,15 @@ if ($teacher_id === '' || $password === '') {
     exit;
 }
 
+// SYSTEM เป็นบัญชีสำหรับงานอัตโนมัติเท่านั้น ห้ามใช้เข้าสู่ระบบครู
+if (strtoupper($teacher_id) === 'SYSTEM') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'บัญชีระบบไม่สามารถเข้าสู่ระบบได้'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 try {
-    $stmt = $conn->prepare("SELECT teacher_id, password, name, department, phone_number, address, blood_group, is_disciplinary FROM teachers WHERE teacher_id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT teacher_id, password, name, department, phone_number, address, blood_group, is_disciplinary, advisor_room FROM teachers WHERE teacher_id = ? LIMIT 1");
     $stmt->bind_param("s", $teacher_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -70,4 +77,4 @@ try {
 } catch (Throwable $e) {
     error_log($e->getMessage());
     echo json_encode(['success' => false, 'message' => 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่'], JSON_UNESCAPED_UNICODE);
-}
+}

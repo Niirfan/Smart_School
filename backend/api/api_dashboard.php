@@ -10,7 +10,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 include 'db.php';
 
-$student_id = isset($_GET['student_id']) ? $_GET['student_id'] : (isset($_POST['student_id']) ? $_POST['student_id'] : 'S001');
+$student_id = isset($_GET['student_id']) ? trim($_GET['student_id']) : (isset($_POST['student_id']) ? trim($_POST['student_id']) : '');
+
+if ($student_id === '') {
+    echo json_encode(['success' => false, 'message' => 'กรุณาระบุ student_id'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+// แปลงวันเกิดเป็นรูปแบบไทย + คำนวณอายุ
+function format_thai_birthdate($birth_date) {
+    if (empty($birth_date)) return null;
+    $thai_months = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    $dt = new DateTime($birth_date);
+    $buddhist_year = intval($dt->format('Y')) + 543;
+    return $dt->format('d') . ' ' . $thai_months[intval($dt->format('n'))] . ' ' . $buddhist_year;
+}
+
+function calculate_age($birth_date) {
+    if (empty($birth_date)) return null;
+    $dob = new DateTime($birth_date);
+    $now = new DateTime();
+    return $dob->diff($now)->y;
+}
 
 try {
     // 1. ดึงข้อมูลนักเรียน
@@ -32,7 +53,7 @@ try {
 
     $student = $student_res->fetch_assoc();
 
-    // 2. ดึงข้อมูลครูที่ปรึกษา (แบบ Safe fallback)
+    // 2. ดึงข้อมูลครูที่ปรึกษา
     $teacher = null;
     try {
         $stmt_t = $conn->prepare("
@@ -53,7 +74,7 @@ try {
     }
 
     // 3. คำนวณ GPAX จากตาราง grades + subjects
-    $gpax = 3.78;
+    $gpax = null;
     try {
         $grade_stmt = $conn->prepare("
             SELECT g.grade_result, s.credit 
@@ -80,10 +101,11 @@ try {
         }
     } catch (Throwable $ge) {}
 
-    // 4. สถิติการมาเรียน (daily_attendance)
+    // 4. สถิติการมาเรียน (daily_attendance) — แยกลาป่วย/ลากิจ ตามโครงสร้างใหม่
     $present = 0;
     $late = 0;
-    $leave = 0;
+    $sick_leave = 0;
+    $business_leave = 0;
     $absent = 0;
     try {
         $att_stmt = $conn->prepare("
@@ -98,16 +120,20 @@ try {
             $att_res = $att_stmt->get_result();
 
             while ($r = $att_res->fetch_assoc()) {
-                if ($r['daily_status'] === 'มาเรียน') $present = intval($r['count']);
-                else if ($r['daily_status'] === 'มาสาย') $late = intval($r['count']);
-                else if ($r['daily_status'] === 'ลา') $leave = intval($r['count']);
-                else if ($r['daily_status'] === 'ขาด') $absent = intval($r['count']);
+                switch ($r['daily_status']) {
+                    case 'มาเรียน': $present = intval($r['count']); break;
+                    case 'มาสาย': $late = intval($r['count']); break;
+                    case 'ลาป่วย': $sick_leave = intval($r['count']); break;
+                    case 'ลากิจ': $business_leave = intval($r['count']); break;
+                    case 'ขาด': $absent = intval($r['count']); break;
+                }
             }
         }
     } catch (Throwable $ae) {}
 
-    $total_days = $present + $late + $leave + $absent;
+    $total_days = $present + $late + $sick_leave + $business_leave + $absent;
     $att_percentage = $total_days > 0 ? round((($present + $late) / $total_days) * 100, 1) : 0;
+    $att_passed = $att_percentage >= 80;
 
     // 5. คะแนนความประพฤติ (behaviors)
     $current_conduct_score = 100.0;
@@ -122,7 +148,6 @@ try {
             $current_conduct_score = round(max(0, min(100, 100 + $score_change)), 2);
         }
 
-        // รายการความประพฤติล่าสุด
         $beh_list_stmt = $conn->prepare("
             SELECT b.score_change, b.reason, b.created_at, t.name as teacher_name 
             FROM behaviors b 
@@ -146,41 +171,34 @@ try {
         }
     } catch (Throwable $be) {}
 
+    // แก้ตรรกะเกณฑ์ผ่าน/ไม่ผ่าน — ต่ำกว่า 80 ต้องขึ้น "ไม่ผ่านเกณฑ์" ไม่ใช่ตรงกันข้าม
+    $conduct_passed = $current_conduct_score >= 80;
+    if ($current_conduct_score >= 90) {
+        $grade_level = 'ดีเยี่ยม (ระดับ A)';
+    } elseif ($current_conduct_score >= 80) {
+        $grade_level = 'ดี (ระดับ B) — ผ่านเกณฑ์';
+    } else {
+        $grade_level = 'ต่ำกว่าเกณฑ์ (ไม่ผ่านเกณฑ์)';
+    }
+
     // 6. ตารางเรียน (timetables)
     $schedule_list = [];
     try {
-        $day_of_week = date('l'); // Monday, Tuesday, ...
-        $student_room = isset($student['room']) ? $student['room'] : 'ม.4/1';
+        $day_of_week = date('l');
+        $student_room = isset($student['room']) ? $student['room'] : null;
 
-        $time_stmt = $conn->prepare("
-            SELECT tt.*, s.subject_code, s.subject_name, s.credit, t.name as teacher_name 
-            FROM timetables tt 
-            JOIN subjects s ON tt.subject_id = s.subject_id 
-            JOIN teachers t ON tt.teacher_id = t.teacher_id 
-            WHERE tt.room = ? AND tt.day_of_week = ? 
-            ORDER BY tt.start_time ASC
-        ");
-        if ($time_stmt) {
+        if ($student_room) {
+            $time_stmt = $conn->prepare("
+                SELECT tt.*, s.subject_code, s.subject_name, s.credit, t.name as teacher_name 
+                FROM timetables tt 
+                JOIN subjects s ON tt.subject_id = s.subject_id 
+                JOIN teachers t ON tt.teacher_id = t.teacher_id 
+                WHERE tt.room = ? AND tt.day_of_week = ? 
+                ORDER BY tt.start_time ASC
+            ");
             $time_stmt->bind_param("ss", $student_room, $day_of_week);
             $time_stmt->execute();
             $time_res = $time_stmt->get_result();
-
-            if ($time_res->num_rows === 0) {
-                $time_fallback = $conn->prepare("
-                    SELECT tt.*, s.subject_code, s.subject_name, s.credit, t.name as teacher_name 
-                    FROM timetables tt 
-                    JOIN subjects s ON tt.subject_id = s.subject_id 
-                    JOIN teachers t ON tt.teacher_id = t.teacher_id 
-                    WHERE tt.room = ? 
-                    ORDER BY tt.start_time ASC 
-                    LIMIT 4
-                ");
-                if ($time_fallback) {
-                    $time_fallback->bind_param("s", $student_room);
-                    $time_fallback->execute();
-                    $time_res = $time_fallback->get_result();
-                }
-            }
 
             $now_time = date('H:i:s');
             while ($sc = $time_res->fetch_assoc()) {
@@ -199,48 +217,48 @@ try {
                     'subjectName' => $sc['subject_name'],
                     'teacherName' => $sc['teacher_name'],
                     'status' => $status,
-                    'recentScore' => '18 /20',
                 ];
             }
         }
     } catch (Throwable $se) {}
 
-    // รวมข้อมูลส่งออก
     $response = [
         'success' => true,
         'data' => [
             'student' => [
                 'id' => $student['student_id'],
                 'fullName' => $student['name'],
-                'classroom' => isset($student['room']) ? $student['room'] : 'ม.4/1',
-                'seatNumber' => intval(isset($student['class_no']) ? $student['class_no'] : 1),
+                'classroom' => $student['room'] ?? '-',
+                'seatNumber' => intval($student['class_no'] ?? 0),
                 'schoolName' => 'โรงเรียนพัฒนาวิทยาการ',
                 'gpax' => $gpax,
                 'status' => 'สถานะปกติ',
-                'avatarUrl' => 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80',
-                'birthDate' => '14 ก.พ. 2554',
-                'age' => 13,
-                'bloodGroup' => 'กรุ๊ป ' . (isset($student['blood_group']) ? $student['blood_group'] : 'O'),
-                'advisorName' => $teacher ? $teacher['name'] : 'ครูสมชาย ใจดี',
-                'advisorPhone' => $teacher ? $teacher['phone_number'] : '081-111-1111',
-                'guardianName' => isset($student['parent_name']) ? $student['parent_name'] : 'นายมานะ ใจเย็น',
-                'guardianRelation' => 'บิดา (ผู้ปกครองหลัก)',
-                'guardianPhone' => isset($student['parent_phone_number']) ? $student['parent_phone_number'] : '089-500-0001',
+                'birthDate' => format_thai_birthdate($student['birth_date'] ?? null),
+                'age' => calculate_age($student['birth_date'] ?? null),
+                'bloodGroup' => 'กรุ๊ป ' . ($student['blood_group'] ?? '-'),
+                'advisorName' => $teacher ? $teacher['name'] : 'ยังไม่ได้กำหนดครูที่ปรึกษา',
+                'advisorPhone' => $teacher ? $teacher['phone_number'] : null,
+                'guardianName' => $student['parent_name'] ?? '-',
+                'guardianRelation' => 'ผู้ปกครองหลัก',
+                'guardianPhone' => $student['parent_phone_number'] ?? '-',
             ],
             'attendance' => [
                 'percentage' => $att_percentage,
-                'statusText' => $att_percentage >= 80 ? 'สถานะปกติ เข้าเรียนสม่ำเสมอ' : 'มีสถิติการมาเรียนต่ำกว่าเกณฑ์',
-                'note' => 'ผ่านเกณฑ์ขั้นต่ำของโรงเรียน (เกณฑ์ผ่าน ≥ 80% มีสิทธิ์สอบปลายภาค)',
+                'statusText' => $att_passed ? 'สถานะปกติ เข้าเรียนสม่ำเสมอ' : 'มีสถิติการมาเรียนต่ำกว่าเกณฑ์',
+                'note' => $att_passed
+                    ? 'ผ่านเกณฑ์ขั้นต่ำของโรงเรียน (เกณฑ์ผ่าน ≥ 80% มีสิทธิ์สอบปลายภาค)'
+                    : 'ต่ำกว่าเกณฑ์ขั้นต่ำของโรงเรียน (ต้องมีสถิติมาเรียน ≥ 80% จึงมีสิทธิ์สอบปลายภาค)',
                 'presentCount' => $present,
                 'lateCount' => $late,
-                'businessLeaveCount' => $leave,
-                'sickLeaveCount' => 0,
+                'businessLeaveCount' => $business_leave,
+                'sickLeaveCount' => $sick_leave,
                 'absentCount' => $absent,
             ],
             'conduct' => [
                 'currentScore' => $current_conduct_score,
                 'maxScore' => 100,
-                'gradeLevel' => $current_conduct_score >= 90 ? 'ดีเยี่ยม (ระดับ A)' : ($current_conduct_score >= 80 ? 'ดี (ระดับ B)' : 'ผ่านเกณฑ์'),
+                'passed' => $conduct_passed,
+                'gradeLevel' => $grade_level,
                 'recentRecords' => $recent_behaviors,
             ],
             'schedule' => $schedule_list,
