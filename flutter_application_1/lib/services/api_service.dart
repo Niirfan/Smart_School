@@ -22,6 +22,29 @@ class DashboardData {
   });
 }
 
+class DailyAttendanceRecord {
+  final String date;
+  final String? scanInTime;
+  final String? scanOutTime;
+  final String status;
+
+  const DailyAttendanceRecord({
+    required this.date,
+    required this.scanInTime,
+    required this.scanOutTime,
+    required this.status,
+  });
+
+  factory DailyAttendanceRecord.fromJson(Map<String, dynamic> json) {
+    return DailyAttendanceRecord(
+      date: json['date']?.toString() ?? '',
+      scanInTime: json['scan_in_time']?.toString(),
+      scanOutTime: json['scan_out_time']?.toString(),
+      status: json['daily_status']?.toString() ?? '-',
+    );
+  }
+}
+
 class AdvisorRoomStats {
   final String room;
   final int totalStudents;
@@ -170,6 +193,22 @@ class ApiService {
     } else {
       throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
     }
+  }
+
+  /// ดึงประวัติการสแกนเข้า-ออกประจำวันของนักเรียน (สูงสุด 90 วันล่าสุด)
+  static Future<List<DailyAttendanceRecord>> getStudentAttendanceHistory({
+    required String studentId,
+  }) async {
+    final url = '$baseUrl/api_student_attendance_history.php?student_id=${Uri.encodeComponent(studentId)}';
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+    final Map<String, dynamic> json = jsonDecode(response.body);
+
+    if (response.statusCode == 200 && json['success'] == true) {
+      return (json['records'] as List<dynamic>? ?? [])
+          .map((row) => DailyAttendanceRecord.fromJson(row as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception(json['message'] ?? 'ไม่สามารถโหลดประวัติการสแกนได้');
   }
 
   /// ดึงตารางเรียนทั้งหมดของห้องเรียน (จากฐานข้อมูลจริงเท่านั้น)

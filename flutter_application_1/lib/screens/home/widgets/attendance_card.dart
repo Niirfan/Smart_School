@@ -15,8 +15,7 @@ class AttendanceCard extends StatelessWidget {
     required Color bgColor,
     required Color color,
   }) {
-    return Expanded(
-      child: Container(
+    return Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: bgColor,
@@ -37,6 +36,8 @@ class AttendanceCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
@@ -45,7 +46,6 @@ class AttendanceCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -69,8 +69,10 @@ class AttendanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 6,
             children: [
               Row(
                 children: [
@@ -173,48 +175,54 @@ class AttendanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // 5 Stat Pills
-          Row(
-            children: [
-              _buildStatPill(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 6.0;
+              final columns = constraints.maxWidth < 500 ? 3 : 5;
+              final itemWidth =
+                  (constraints.maxWidth - spacing * (columns - 1)) / columns;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+              SizedBox(width: itemWidth, child: _buildStatPill(
                 icon: Icons.person_outline,
                 count: stat.presentCount,
                 label: 'มาเรียน',
                 bgColor: const Color(0xFFE6F8F0),
                 color: const Color(0xFF0F9456),
-              ),
-              const SizedBox(width: 6),
-              _buildStatPill(
+              )),
+              SizedBox(width: itemWidth, child: _buildStatPill(
                 icon: Icons.access_time,
                 count: stat.lateCount,
                 label: 'มาสาย',
                 bgColor: const Color(0xFFFEF5E7),
                 color: const Color(0xFFD97706),
-              ),
-              const SizedBox(width: 6),
-              _buildStatPill(
+              )),
+              SizedBox(width: itemWidth, child: _buildStatPill(
                 icon: Icons.event_note_outlined,
                 count: stat.businessLeaveCount,
                 label: 'ลากิจ',
                 bgColor: const Color(0xFFE8EEFC),
                 color: const Color(0xFF2563EB),
-              ),
-              const SizedBox(width: 6),
-              _buildStatPill(
+              )),
+              SizedBox(width: itemWidth, child: _buildStatPill(
                 icon: Icons.medical_services_outlined,
                 count: stat.sickLeaveCount,
                 label: 'ลาป่วย',
                 bgColor: const Color(0xFFF3EDFD),
                 color: const Color(0xFF7C3AED),
-              ),
-              const SizedBox(width: 6),
-              _buildStatPill(
+              )),
+              SizedBox(width: itemWidth, child: _buildStatPill(
                 icon: Icons.person_off_outlined,
                 count: stat.absentCount,
                 label: 'ขาด',
                 bgColor: const Color(0xFFFEECEB),
                 color: const Color(0xFFE12D39),
-              ),
-            ],
+              )),
+                ],
+              );
+            },
           ),
         ],
       ),

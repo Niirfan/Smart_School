@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/teacher_model.dart';
 import '../../services/api_service.dart';
+import '../../services/auth_session.dart';
 import '../../theme/app_theme.dart';
 import '../main_navigation.dart';
 import '../teacher/teacher_navigation.dart';
@@ -71,6 +72,9 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (result['success'] == true && result['teacher'] != null) {
           final teacher = TeacherModel.fromJson(result['teacher']);
+          await AuthSession.saveTeacher(teacher);
+          await _offerBiometricUnlock();
+          if (!mounted) return;
 
           Navigator.pushReplacement(
             context,
@@ -100,6 +104,9 @@ class _LoginScreenState extends State<LoginScreen>
           final studentId =
               result['student']?['student_id']?.toString() ??
               _studentIdCtrl.text.trim().toUpperCase();
+          await AuthSession.saveStudent(studentId);
+          await _offerBiometricUnlock();
+          if (!mounted) return;
 
           Navigator.pushReplacement(
             context,
@@ -128,6 +135,30 @@ class _LoginScreenState extends State<LoginScreen>
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _offerBiometricUnlock() async {
+    if (!await AuthSession.canUseBiometrics || !mounted) return;
+    final enable = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('เปิดใช้การเข้าสู่ระบบด้วยชีวมิติ?'),
+        content: const Text(
+          'ครั้งถัดไปสามารถใช้ลายนิ้วมือหรือใบหน้าที่ตั้งค่าไว้ในอุปกรณ์เพื่อปลดล็อกเซสชันนี้ได้',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ไว้ก่อน'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('เปิดใช้'),
+          ),
+        ],
+      ),
+    );
+    if (enable == true) await AuthSession.setBiometricEnabled(true);
   }
 
   @override

@@ -188,7 +188,6 @@ class _QrScreenState extends State<QrScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
               ],
             ),
           );
@@ -196,4 +195,5 @@ class _QrScreenState extends State<QrScreen> {
       ),
     );
   }
+
 }

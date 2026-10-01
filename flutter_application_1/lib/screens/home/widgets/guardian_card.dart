@@ -16,13 +16,13 @@ class _GuardianContactCardState extends State<GuardianContactCard> {
   bool _isExpanded = true;
 
   Future<void> _makePhoneCall(String phoneNumber) async {
+    final number = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (number.isEmpty) return;
     final Uri launchUri = Uri(
       scheme: 'tel',
-      path: phoneNumber.replaceAll('-', '').trim(),
+      path: number,
     );
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
-    }
+    await launchUrl(launchUri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -56,23 +56,25 @@ class _GuardianContactCardState extends State<GuardianContactCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: const [
-                    Icon(
+                Expanded(
+                  child: Row(
+                    children: [
+                    const Icon(
                       Icons.badge_outlined,
                       size: 20,
                       color: AppColors.primaryNavy,
                     ),
-                    SizedBox(width: 8),
-                    Text(
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text(
                       'ข้อมูลพื้นฐานและผู้ปกครอง',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
-                    ),
-                  ],
+                    )),
+                    ],
+                  ),
                 ),
                 Icon(
                   _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -287,9 +289,9 @@ class _GuardianContactCardState extends State<GuardianContactCard> {
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      Expanded(
+                        child: Row(
                         children: [
                           const Icon(
                             Icons.phone_outlined,
@@ -297,16 +299,20 @@ class _GuardianContactCardState extends State<GuardianContactCard> {
                             color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
-                          Text(
+                          Expanded(child: Text(
                             student.guardianPhone,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
-                          ),
+                          )),
                         ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       ElevatedButton.icon(
                         onPressed: () => _makePhoneCall(student.guardianPhone),
                         style: ElevatedButton.styleFrom(

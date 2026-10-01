@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
+import '../../services/auth_session.dart';
 import '../../theme/app_theme.dart';
 import '../auth/login_screen.dart';
 import '../home/widgets/guardian_card.dart';
@@ -93,8 +95,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx); // close dialog
+                    await AuthSession.clear();
+                    if (!context.mounted) return;
                     // ล้าง stack ทั้งหมด แล้วไปหน้า Login
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -129,7 +133,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String title, String subtitle) {
+  Future<void> _callPhone(String phone) async {
+    final number = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (number.isEmpty) return;
+    await launchUrl(
+      Uri(scheme: 'tel', path: number),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  Widget _buildInfoTile(IconData icon, String title, String subtitle,
+      {String? phoneNumber}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -162,10 +176,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+          if (phoneNumber != null && phoneNumber.trim().isNotEmpty)
+            IconButton(
+              tooltip: 'โทรออก',
+              onPressed: () => _callPhone(phoneNumber),
+              icon: const Icon(Icons.call, color: AppColors.primaryBlue),
+            ),
         ],
       ),
     );
@@ -276,6 +298,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       Text(
                         student.fullName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -285,6 +309,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'รหัสประจำตัว: ${student.id}  •  ห้อง ${student.classroom} (เลขที่ ${student.seatNumber})',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -344,7 +370,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           'ผู้ปกครอง', '${student.guardianName} (${student.guardianRelation})'),
                       const Divider(height: 1, color: AppColors.divider),
                       _buildInfoTile(Icons.phone_outlined, 'เบอร์โทรผู้ปกครอง',
-                          student.guardianPhone),
+                          student.guardianPhone,
+                          phoneNumber: student.guardianPhone),
                     ],
                   ),
                 ),

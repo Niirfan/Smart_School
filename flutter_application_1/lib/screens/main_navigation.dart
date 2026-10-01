@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'attendance/student_attendance_history_screen.dart';
 import 'grades/grades_screen.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
@@ -24,6 +25,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _screens = [
       HomeScreen(studentId: widget.studentId),
       QrScreen(studentId: widget.studentId),
+      StudentAttendanceHistoryScreen(studentId: widget.studentId),
       GradesScreen(studentId: widget.studentId), 
       ProfileScreen(studentId: widget.studentId),
     ];
@@ -71,6 +73,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               icon: Icon(Icons.qr_code_outlined, color: AppColors.textSecondary),
               selectedIcon: Icon(Icons.qr_code_scanner, color: AppColors.primaryBlue),
               label: 'QR Code',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.history, color: AppColors.primaryBlue),
+              label: 'ประวัติ',
             ),
             NavigationDestination(
               icon: Icon(Icons.stars_outlined, color: AppColors.textSecondary),

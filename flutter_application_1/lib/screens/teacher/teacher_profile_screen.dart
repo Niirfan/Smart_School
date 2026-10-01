@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/teacher_model.dart';
+import '../../services/auth_session.dart';
 import '../../models/conduct_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
@@ -59,6 +61,15 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
         _isLoadingHistory = false;
       });
     }
+  }
+
+  Future<void> _callPhone(String? phone) async {
+    final number = (phone ?? '').replaceAll(RegExp(r'[^0-9+]'), '');
+    if (number.isEmpty) return;
+    await launchUrl(
+      Uri(scheme: 'tel', path: number),
+      mode: LaunchMode.externalApplication,
+    );
   }
 
   Future<void> _saveConduct() async {
@@ -148,7 +159,9 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
               width: double.infinity,
               height: 48,
               child: OutlinedButton.icon(
-                onPressed: () {
+                onPressed: () async {
+                  await AuthSession.clear();
+                  if (!context.mounted) return;
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -186,6 +199,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             const SizedBox(height: 12),
             Text(
               widget.teacher.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.prompt(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -205,7 +220,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             const SizedBox(height: 12),
             _buildProfileDetailRow(Icons.domain, 'กลุ่มสาระการเรียนรู้', widget.teacher.department ?? 'ทั่วไป'),
             const SizedBox(height: 8),
-            _buildProfileDetailRow(Icons.phone, 'เบอร์โทรศัพท์', widget.teacher.phoneNumber ?? '-'),
+            _buildProfileDetailRow(Icons.phone, 'เบอร์โทรศัพท์', widget.teacher.phoneNumber ?? '-', isPhone: true),
             const SizedBox(height: 8),
             _buildProfileDetailRow(Icons.home, 'ที่อยู่', widget.teacher.address ?? '-'),
             const SizedBox(height: 8),
@@ -216,23 +231,31 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     );
   }
 
-  Widget _buildProfileDetailRow(IconData icon, String label, String value) {
+  Widget _buildProfileDetailRow(IconData icon, String label, String value, {bool isPhone = false}) {
     return Row(
       children: [
         Icon(icon, size: 16, color: AppColors.textMuted),
         const SizedBox(width: 10),
-        Text(
-          '$label: ',
-          style: GoogleFonts.prompt(fontSize: 13, color: AppColors.textSecondary),
-        ),
         Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.prompt(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-            textAlign: TextAlign.end,
-            overflow: TextOverflow.ellipsis,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.prompt(fontSize: 11, color: AppColors.textSecondary)),
+              Text(
+                value,
+                style: GoogleFonts.prompt(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                maxLines: isPhone ? 1 : 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
+        if (isPhone && value.trim().isNotEmpty && value != '-')
+          IconButton(
+            tooltip: 'โทรออก',
+            onPressed: () => _callPhone(value),
+            icon: const Icon(Icons.call, color: AppColors.primaryBlue),
+          ),
       ],
     );
   }
