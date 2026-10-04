@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import '../../../models/attendance_model.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/academic_year_helper.dart';
 
 class AttendanceCard extends StatelessWidget {
   final AttendanceStat stat;
@@ -93,7 +94,7 @@ class AttendanceCard extends StatelessWidget {
                 ],
               ),
               Text(
-                'ภาคเรียนที่ 1/2568',
+                AcademicYearHelper.label(),
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,

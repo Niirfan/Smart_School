@@ -1,3 +1,5 @@
+import '../utils/academic_year_helper.dart';
+
 class GradeItem {
   final int gradeId;
   final String subjectCode;
@@ -25,7 +27,8 @@ class GradeItem {
       subjectCode: json['subjectCode'] ?? '',
       subjectName: json['subjectName'] ?? '',
       credit: (json['credit'] as num?)?.toDouble() ?? 1.5,
-      academicYear: json['academicYear'] ?? 2568,
+      academicYear: json['academicYear'] ?? AcademicYearHelper.currentAcademicYear(),
+
       semester: json['semester'] ?? 1,
       totalScore: (json['totalScore'] as num?)?.toDouble() ?? 0.0,
       gradeResult: (json['gradeResult'] as num?)?.toDouble() ?? 0.0,

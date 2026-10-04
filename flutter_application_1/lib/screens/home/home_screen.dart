@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/academic_year_helper.dart';
 import 'widgets/attendance_card.dart';
 import 'widgets/conduct_card.dart';
 import 'widgets/schedule_card.dart';
@@ -87,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 Text(
-                  'Dashboard Scores • ภาคเรียนที่ 1/2568',
+                  'Dashboard Scores • ${AcademicYearHelper.label()}',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,

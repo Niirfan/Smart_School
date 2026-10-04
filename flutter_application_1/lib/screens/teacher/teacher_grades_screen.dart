@@ -4,6 +4,7 @@ import '../../models/teacher_model.dart';
 import '../../models/student_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/academic_year_helper.dart';
 
 class TeacherGradesScreen extends StatefulWidget {
   final TeacherModel teacher;
@@ -18,19 +19,20 @@ class TeacherGradesScreen extends StatefulWidget {
 }
 
 class _TeacherGradesScreenState extends State<TeacherGradesScreen> {
-  String _selectedSubject = 'MATH101';
+  String _selectedSubject = 'SUB001';
   final Map<String, String> _subjects = {
-    'MATH101': 'คณิตศาสตร์พื้นฐาน',
-    'SCI101': 'วิทยาศาสตร์และเทคโนโลยี',
-    'ENG101': 'ภาษาอังกฤษพื้นฐาน',
-    'THAI101': 'ภาษาไทยพื้นฐาน',
+    'SUB001': 'คณิตศาสตร์พื้นฐาน 1',
+    'SUB002': 'ภาษาไทยพื้นฐาน 1',
+    'SUB003': 'วิทยาศาสตร์พื้นฐาน 1',
+    'SUB004': 'สังคมและประวัติศาสตร์',
+    'SUB005': 'ภาษาอังกฤษพื้นฐาน 1',
   };
 
   String _selectedRoom = 'ม.1/1';
   final List<String> _rooms = ['ม.1/1', 'ม.1/2', 'ม.2/1', 'ม.3/1'];
 
-  final int _academicYear = 2567;
-  final int _semester = 1;
+  final int _academicYear = AcademicYearHelper.currentAcademicYear();
+  final int _semester = AcademicYearHelper.currentSemester();
 
   List<StudentModel> _students = [];
   final Map<String, TextEditingController> _scoreControllers = {};

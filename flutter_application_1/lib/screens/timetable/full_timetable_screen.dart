@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/schedule_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/academic_year_helper.dart';
 
 class FullTimetableScreen extends StatefulWidget {
   final String room;
@@ -77,7 +78,7 @@ class _FullTimetableScreenState extends State<FullTimetableScreen>
             ),
             const SizedBox(height: 6),
             Text(
-              'ตารางเรียนห้อง ${widget.room} ภาคเรียนที่ 1/2568',
+              'ตารางเรียนห้อง ${widget.room} ${AcademicYearHelper.label()}',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 20),

@@ -12,7 +12,8 @@ include 'db.php';
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
-    $student_id = isset($input['student_id']) ? trim($input['student_id']) : (isset($_POST['student_id']) ? trim($_POST['student_id']) : '');
+    $raw_id = isset($input['student_id']) ? trim($input['student_id']) : (isset($_POST['student_id']) ? trim($_POST['student_id']) : '');
+    $student_id = strtoupper($raw_id);
     $password = isset($input['password']) ? $input['password'] : (isset($_POST['password']) ? $_POST['password'] : '');
 
     if (empty($student_id) || empty($password)) {
@@ -44,7 +45,12 @@ try {
 
     // ตรวจสอบรหัสผ่าน (รองรับทั้ง BCRYPT HASH และ PLAIN TEXT)
     $db_pass = $student['password'];
-    $is_valid = password_verify($password, $db_pass) || ($password === $db_pass);
+    $is_valid = false;
+    if (password_get_info($db_pass)['algo'] !== null) {
+        $is_valid = password_verify($password, $db_pass);
+    } else {
+        $is_valid = ($password === $db_pass);
+    }
 
     if (!$is_valid) {
         echo json_encode([

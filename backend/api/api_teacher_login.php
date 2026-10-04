@@ -17,7 +17,7 @@ include 'db.php';
 
 // รับ input
 $input = json_decode(file_get_contents('php://input'), true);
-$teacher_id = trim($input['teacher_id'] ?? '');
+$teacher_id = strtoupper(trim($input['teacher_id'] ?? ''));
 $password   = (string)($input['password'] ?? '');
 
 if ($teacher_id === '' || $password === '') {
@@ -26,7 +26,7 @@ if ($teacher_id === '' || $password === '') {
 }
 
 // SYSTEM เป็นบัญชีสำหรับงานอัตโนมัติเท่านั้น ห้ามใช้เข้าสู่ระบบครู
-if (strtoupper($teacher_id) === 'SYSTEM') {
+if ($teacher_id === 'SYSTEM') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'บัญชีระบบไม่สามารถเข้าสู่ระบบได้'], JSON_UNESCAPED_UNICODE);
     exit;
@@ -39,7 +39,7 @@ try {
     $res = $stmt->get_result();
 
     if ($res->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'ไม่พบรหัสครูนี้ในระบบ'], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['success' => false, 'message' => 'ไม่พบรหัสครู "' . $teacher_id . '" ในระบบ'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -50,10 +50,10 @@ try {
     if (password_get_info($stored_password)['algo'] !== null) {
         $password_valid = password_verify($password, $stored_password);
     } else {
-        $password_valid = hash_equals($stored_password, $password);
+        $password_valid = ($password === $stored_password);
     }
 
-    if ($password_valid !== true) {
+    if (!$password_valid) {
         echo json_encode(['success' => false, 'message' => 'รหัสผ่านไม่ถูกต้อง'], JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -76,5 +76,6 @@ try {
 
 } catch (Throwable $e) {
     error_log($e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่'], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
 }
+?>
