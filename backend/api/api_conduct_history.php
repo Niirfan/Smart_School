@@ -30,7 +30,7 @@ try {
     if ($stmt) {
         $stmt->bind_param("s", $student_id);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         while ($row = $res->fetch_assoc()) {
             $records[] = [

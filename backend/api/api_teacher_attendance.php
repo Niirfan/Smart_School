@@ -21,7 +21,7 @@ function has_behavior_for_day(mysqli $conn, string $student_id, string $date, st
     );
     $stmt->bind_param('sss', $student_id, $date, $reason_prefix);
     $stmt->execute();
-    return $stmt->get_result()->num_rows > 0;
+    return smart_school_get_result($stmt)->num_rows > 0;
 }
 
 try {
@@ -54,7 +54,7 @@ try {
         );
         $teacher_stmt->bind_param("s", $teacher_id);
         $teacher_stmt->execute();
-        $teacher = $teacher_stmt->get_result()->fetch_assoc();
+        $teacher = smart_school_get_result($teacher_stmt)->fetch_assoc();
 
         if (!$teacher) {
             http_response_code(403);
@@ -72,7 +72,7 @@ try {
         $stmt = $conn->prepare("SELECT student_id, name FROM students WHERE student_id = ?");
         $stmt->bind_param("s", $student_id);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
         if ($res->num_rows === 0) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบรหัสนักเรียนนี้ในระบบ'], JSON_UNESCAPED_UNICODE);
             exit();
@@ -140,7 +140,7 @@ try {
             $chk = $conn->prepare("SELECT scan_in_time FROM daily_attendance WHERE student_id = ? AND date = ?");
             $chk->bind_param("ss", $student_id, $date);
             $chk->execute();
-            $chk_res = $chk->get_result();
+            $chk_res = smart_school_get_result($chk);
 
             if ($chk_res->num_rows === 0 || empty($chk_res->fetch_assoc()['scan_in_time'])) {
                 // ไม่สแกนเข้า หัก 3 คะแนน
@@ -197,7 +197,7 @@ try {
         ");
         $stmt->bind_param("ss", $date, $room);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         $students = [];
         while ($row = $res->fetch_assoc()) {

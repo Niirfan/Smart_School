@@ -149,7 +149,11 @@ class ApiService {
         throw Exception(json['message'] ?? 'ไม่พบข้อมูลนักเรียนในฐานข้อมูล');
       }
     } else {
-      throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
+      final body = response.body.trim();
+      throw Exception(
+        'เซิร์ฟเวอร์ตอบกลับ HTTP ${response.statusCode}'
+        '${body.isNotEmpty ? ': $body' : ''}',
+      );
     }
   }
 

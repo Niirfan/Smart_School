@@ -20,7 +20,7 @@ try {
         $stmt = $conn->prepare("SELECT advisor_room FROM teachers WHERE teacher_id = ?");
         $stmt->bind_param("s", $teacher_id);
         $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
+        $row = smart_school_get_result($stmt)->fetch_assoc();
         return $row ? $row['advisor_room'] : null;
     }
 
@@ -56,7 +56,7 @@ try {
         $stmt = $conn->prepare("SELECT room FROM students WHERE student_id = ?");
         $stmt->bind_param("s", $student_id);
         $stmt->execute();
-        $student = $stmt->get_result()->fetch_assoc();
+        $student = smart_school_get_result($stmt)->fetch_assoc();
 
         if (!$student) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบนักเรียนคนนี้'], JSON_UNESCAPED_UNICODE);
@@ -139,7 +139,7 @@ try {
         }
 
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
         $records = [];
         while ($row = $res->fetch_assoc()) {
             $records[] = [
@@ -182,7 +182,7 @@ try {
         ");
         $stmt->bind_param("ss", $leave_id, $advisor_room);
         $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
+        $row = smart_school_get_result($stmt)->fetch_assoc();
 
         if (!$row) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบรายการลานี้ หรือไม่มีสิทธิ์ลบ'], JSON_UNESCAPED_UNICODE);

@@ -22,7 +22,7 @@ try {
     $stmt = $conn->prepare("SELECT teacher_id, name, department, phone_number, address, blood_group, is_disciplinary, advisor_room FROM teachers WHERE teacher_id = ?");
     $stmt->bind_param("s", $teacher_id);
     $stmt->execute();
-    $res = $stmt->get_result();
+    $res = smart_school_get_result($stmt);
 
     if ($res->num_rows === 0) {
         echo json_encode(['success' => false, 'message' => 'ไม่พบข้อมูลครู'], JSON_UNESCAPED_UNICODE);
@@ -47,7 +47,7 @@ try {
     ");
     $stmt->bind_param("ss", $teacher_id, $today_en);
     $stmt->execute();
-    $res = $stmt->get_result();
+    $res = smart_school_get_result($stmt);
 
     $today_schedule = [];
     $rooms_today = [];
@@ -86,7 +86,7 @@ try {
         $stmt = $conn->prepare("SELECT COUNT(*) as cnt FROM students WHERE room IN ($placeholders)");
         $stmt->bind_param($types, ...$rooms_today);
         $stmt->execute();
-        $students_count = (int)$stmt->get_result()->fetch_assoc()['cnt'];
+        $students_count = (int)smart_school_get_result($stmt)->fetch_assoc()['cnt'];
 
         $types2 = str_repeat('s', count($rooms_today)) . 's';
         $params2 = array_merge($rooms_today, [$today_date]);
@@ -97,7 +97,7 @@ try {
         ");
         $stmt->bind_param($types2, ...$params2);
         $stmt->execute();
-        $not_checked_in = (int)$stmt->get_result()->fetch_assoc()['cnt'];
+        $not_checked_in = (int)smart_school_get_result($stmt)->fetch_assoc()['cnt'];
     }
 
     // --- 4. สถิติห้องที่ปรึกษา + รายชื่อขาด/ลา (ฟิลด์ใหม่ เสริมเข้ามา ไม่กระทบของเดิม) ---
@@ -108,7 +108,7 @@ try {
         $stmt = $conn->prepare("SELECT student_id, name FROM students WHERE room = ? ORDER BY class_no ASC");
         $stmt->bind_param("s", $advisor_room);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
         $advisor_students = [];
         while ($row = $res->fetch_assoc()) {
             $advisor_students[$row['student_id']] = $row['name'];
@@ -130,7 +130,7 @@ try {
             ");
             $stmt->bind_param($types, ...$params);
             $stmt->execute();
-            $res = $stmt->get_result();
+            $res = smart_school_get_result($stmt);
 
             while ($row = $res->fetch_assoc()) {
                 $checked_in_ids[] = $row['student_id'];

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/schedule_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/academic_year_helper.dart';
 
 class FullTimetableScreen extends StatefulWidget {
   final String room;
@@ -43,101 +42,6 @@ class _FullTimetableScreenState extends State<FullTimetableScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _downloadTimetable(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'ดาวน์โหลดตารางเรียน',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'ตารางเรียนห้อง ${widget.room} ${AcademicYearHelper.label()}',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEECEB),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.picture_as_pdf, color: Color(0xFFE12D39)),
-              ),
-              title: const Text(
-                'บันทึกเป็นไฟล์ PDF',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: const Text('เหมาะสำหรับพิมพ์ลงกระดาษ A4'),
-              trailing: const Icon(Icons.download_rounded, color: AppColors.primaryNavy),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('กำลังดาวน์โหลด Timetable_M1-1.pdf... ดาวน์โหลดสำเร็จแล้ว! 📄'),
-                    backgroundColor: Color(0xFF0F9456),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8EEFC),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.image, color: Color(0xFF2563EB)),
-              ),
-              title: const Text(
-                'บันทึกเป็นรูปภาพลงเครื่อง',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: const Text('บันทึกลงแกลเลอรีรูปภาพสำหรับดูออฟไลน์'),
-              trailing: const Icon(Icons.download_rounded, color: AppColors.primaryNavy),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('บันทึกรูปภาพตารางเรียนลงเครื่องเรียบร้อยแล้ว 🖼️'),
-                    backgroundColor: Color(0xFF0F9456),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildClassCard(TimetableEntry entry) {
@@ -269,13 +173,6 @@ class _FullTimetableScreenState extends State<FullTimetableScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('ตารางเรียนห้อง ${widget.room}'),
-        actions: [
-          IconButton(
-            onPressed: () => _downloadTimetable(context),
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'ดาวน์โหลดตารางเรียน',
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: false,
@@ -379,33 +276,6 @@ class _FullTimetableScreenState extends State<FullTimetableScreen>
             }).toList(),
           );
         },
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 46,
-          child: ElevatedButton.icon(
-            onPressed: () => _downloadTimetable(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryNavy,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text(
-              'ดาวน์โหลดตารางเรียนทั้งหมด (PDF / รูปภาพ)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            ),
-          ),
-        ),
       ),
     );
   }

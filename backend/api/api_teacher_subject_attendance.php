@@ -32,7 +32,7 @@ try {
         $stmt = $conn->prepare("SELECT teacher_id, room FROM timetables WHERE schedule_id = ?");
         $stmt->bind_param("s", $schedule_id);
         $stmt->execute();
-        $sched = $stmt->get_result()->fetch_assoc();
+        $sched = smart_school_get_result($stmt)->fetch_assoc();
 
         if (!$sched) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบคาบเรียนนี้'], JSON_UNESCAPED_UNICODE);
@@ -62,7 +62,7 @@ try {
             $student_stmt = $conn->prepare("SELECT room FROM students WHERE student_id = ? LIMIT 1");
             $student_stmt->bind_param("s", $student_id);
             $student_stmt->execute();
-            $student_row = $student_stmt->get_result()->fetch_assoc();
+            $student_row = smart_school_get_result($student_stmt)->fetch_assoc();
             if (!$student_row || $student_row['room'] !== $sched['room']) {
                 throw new Exception("นักเรียน $student_id ไม่ได้อยู่ห้อง {$sched['room']} ของคาบนี้");
             }
@@ -98,7 +98,7 @@ try {
         $stmt = $conn->prepare("SELECT room, teacher_id FROM timetables WHERE schedule_id = ?");
         $stmt->bind_param("s", $schedule_id);
         $stmt->execute();
-        $sched = $stmt->get_result()->fetch_assoc();
+        $sched = smart_school_get_result($stmt)->fetch_assoc();
 
         if (!$sched) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบคาบเรียนนี้'], JSON_UNESCAPED_UNICODE);
@@ -120,7 +120,7 @@ try {
         ");
         $stmt->bind_param("sss", $schedule_id, $date, $room);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         $students = [];
         while ($row = $res->fetch_assoc()) {

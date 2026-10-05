@@ -12,7 +12,7 @@ $dbname = "6620310131_smartschool_db";
 $hosts = ['172.18.111.42', 'localhost', '127.0.0.1'];
 
 $conn = null;
-$last_error = '';
+$db_error = '';
 
 foreach ($hosts as $h) {
     try {
@@ -21,21 +21,16 @@ foreach ($hosts as $h) {
             $conn = $c;
             break;
         } else {
-            if ($c) { $last_error = $c->connect_error; }
+            if ($c) { $db_error = $c->connect_error; }
         }
     } catch (Throwable $e) {
-        $last_error = $e->getMessage();
+        $db_error = $e->getMessage();
     }
 }
 
-if (!$conn || $conn->connect_error) {
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode([
-        'success' => false,
-        'message' => 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ: ' . ($last_error !== '' ? $last_error : 'Connection failed')
-    ], JSON_UNESCAPED_UNICODE);
-    exit();
+// ถ้าเชื่อมต่อสำเร็จ reset error
+if ($conn && !$conn->connect_error) {
+    $db_error = '';
+    $conn->set_charset("utf8mb4");
 }
-
-$conn->set_charset("utf8mb4");
 ?>

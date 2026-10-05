@@ -31,7 +31,7 @@ try {
         $stmt = $conn->prepare("SELECT is_disciplinary FROM teachers WHERE teacher_id = ?");
         $stmt->bind_param("s", $teacher_id);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         if ($res->num_rows === 0) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบข้อมูลครู'], JSON_UNESCAPED_UNICODE);
@@ -49,7 +49,7 @@ try {
         $stmt = $conn->prepare("SELECT student_id FROM students WHERE student_id = ?");
         $stmt->bind_param("s", $student_id);
         $stmt->execute();
-        if ($stmt->get_result()->num_rows === 0) {
+        if (smart_school_get_result($stmt)->num_rows === 0) {
             echo json_encode(['success' => false, 'message' => 'ไม่พบรหัสนักเรียนนี้ในระบบ'], JSON_UNESCAPED_UNICODE);
             exit();
         }
@@ -90,7 +90,7 @@ try {
         ");
         $stmt->bind_param("s", $teacher_id);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         $history = [];
         while ($row = $res->fetch_assoc()) {

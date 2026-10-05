@@ -34,7 +34,7 @@ try {
         ");
         $stmt->bind_param("s", $room);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         $students = [];
         while ($row = $res->fetch_assoc()) {
@@ -48,7 +48,7 @@ try {
         $stmt = $conn->prepare("SELECT DISTINCT room FROM timetables WHERE teacher_id = ?");
         $stmt->bind_param("s", $teacher_id);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         $rooms = [];
         while ($row = $res->fetch_assoc()) {
@@ -69,7 +69,7 @@ try {
         ");
         $stmt->bind_param($types, ...$rooms);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         // จัดกลุ่มตามห้อง ให้ Flutter render ง่ายขึ้น (accordion/section list)
         $students_by_room = [];

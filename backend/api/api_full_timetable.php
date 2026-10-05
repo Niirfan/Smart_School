@@ -33,7 +33,7 @@ try {
     if ($stmt) {
         $stmt->bind_param("s", $room);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         while ($row = $res->fetch_assoc()) {
             $day = $row['day_of_week'];

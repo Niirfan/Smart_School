@@ -1,5 +1,5 @@
-name: flutter_application_1
-description: "A new Flutter project."
+name: smartschool
+description: "Smart School - ระบบบริหารจัดการโรงเรียน"
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -24,6 +24,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1a237e"
+  adaptive_icon_foreground: "assets/images/app_icon.png"
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/

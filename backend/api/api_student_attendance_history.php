@@ -31,7 +31,7 @@ try {
 
     $stmt->bind_param('s', $student_id);
     $stmt->execute();
-    $result = $stmt->get_result();
+    $result = smart_school_get_result($stmt);
     $records = [];
     while ($row = $result->fetch_assoc()) {
         $records[] = [

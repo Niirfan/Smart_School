@@ -97,7 +97,7 @@ try {
         ");
         $stmt->bind_param("siis", $subject_id, $academic_year, $semester, $room);
         $stmt->execute();
-        $res = $stmt->get_result();
+        $res = smart_school_get_result($stmt);
 
         $students = [];
         while ($row = $res->fetch_assoc()) {

@@ -2,6 +2,43 @@
 require_once __DIR__ . '/session.php';
 include 'db.php';
 
+// ถ้าเชื่อมต่อ DB ไม่ได้ แสดงหน้า error แทน
+if (!$conn || !empty($db_error)) {
+?><!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ไม่สามารถเชื่อมต่อระบบ - Smart School</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a, #1e293b); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .error-card { background: white; border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 440px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .icon { font-size: 56px; margin-bottom: 20px; }
+        h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+        p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+        .detail { background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin-top: 16px; font-size: 13px; color: #991b1b; text-align: left; word-break: break-all; }
+        .btn { display: inline-block; margin-top: 24px; padding: 12px 28px; background: #2563eb; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px; }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="icon">🔌</div>
+        <h2>ไม่สามารถเชื่อมต่อฐานข้อมูลได้</h2>
+        <p>ระบบไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ฐานข้อมูลได้ในขณะนี้</p>
+        <p>กรุณาติดต่อผู้ดูแลระบบ หรือลองใหม่อีกครั้งในภายหลัง</p>
+        <?php if (!empty($db_error)): ?>
+            <div class="detail">⚠️ <?php echo htmlspecialchars($db_error); ?></div>
+        <?php endif; ?>
+        <a href="index.php" class="btn">🔄 ลองใหม่อีกครั้ง</a>
+    </div>
+</body>
+</html>
+<?php
+    exit();
+}
+
 $error = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

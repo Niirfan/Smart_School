@@ -7,6 +7,12 @@ if (!isset($_SESSION['teacher_id'])) {
     exit();
 }
 
+// ถ้าเชื่อมต่อ DB ไม่ได้ redirect กลับ
+if (!$conn || !empty($db_error)) {
+    header("Location: index.php");
+    exit();
+}
+
 $teacher_name = $_SESSION['teacher_name'] ?? 'คุณครู';
 $teacher_id = $_SESSION['teacher_id'] ?? '';
 
@@ -122,14 +128,14 @@ if ($res_grd) { $count_grades = $res_grd->fetch_assoc()['total']; }
             <span>Smart School Web</span>
         </div>
         <div class="user-info">
-            <span class="user-badge">👤 คุณครู<?php echo htmlspecialchars($teacher_name); ?> (<?php echo htmlspecialchars($teacher_id); ?>)</span>
+            <span class="user-badge">👤 <?php echo htmlspecialchars($teacher_name); ?> (<?php echo htmlspecialchars($teacher_id); ?>)</span>
             <a href="logout.php" class="btn-logout">🚪 ออกจากระบบ</a>
         </div>
     </header>
 
     <div class="container">
         <div class="welcome-card">
-            <h1>ยินดีต้อนรับ, ครู<?php echo htmlspecialchars($teacher_name); ?></h1>
+            <h1>ยินดีต้อนรับ, <?php echo htmlspecialchars($teacher_name); ?></h1>
             <p>ระบบบริหารจัดการวิชาและตัดเกรดออนไลน์สำหรับครูผู้สอน Smart School</p>
         </div>
 
@@ -173,8 +179,8 @@ if ($res_grd) { $count_grades = $res_grd->fetch_assoc()['total']; }
                     <div class="menu-icon icon-purple">📝</div>
                     <h3>บันทึกคะแนนและตัดเกรด</h3>
                 </div>
-                <p>เลือกนักเรียน วิชา และกรอกคะแนนตัดเกรดอัตโนมัติ พร้อมดูตารางประวัติล่าสุด</p>
-                <div class="arrow-link">เข้าสู่หน้าบันทึกเกรด ➔</div>
+                <p>ตัดเกรดเฉพาะวิชาที่คุณสอน แยกรายห้องเรียน กรอกคะแนนทั้งห้องพร้อมกัน พร้อม preview เกรด real-time</p>
+                <div class="arrow-link">เข้าสู่หน้าตัดเกรด ➔</div>
             </a>
         </div>
     </div>

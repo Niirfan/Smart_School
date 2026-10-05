@@ -36,7 +36,7 @@ try {
     $stmt = $conn->prepare("SELECT teacher_id, password, name, department, phone_number, address, blood_group, is_disciplinary, advisor_room FROM teachers WHERE teacher_id = ? LIMIT 1");
     $stmt->bind_param("s", $teacher_id);
     $stmt->execute();
-    $res = $stmt->get_result();
+    $res = smart_school_get_result($stmt);
 
     if ($res->num_rows === 0) {
         echo json_encode(['success' => false, 'message' => 'ไม่พบรหัสครู "' . $teacher_id . '" ในระบบ'], JSON_UNESCAPED_UNICODE);

@@ -74,7 +74,7 @@ function hasBehaviorForStudentOnDate(mysqli $conn, string $student_id, string $d
     );
     $stmt->bind_param('ss', $student_id, $pattern);
     $stmt->execute();
-    $exists = $stmt->get_result()->num_rows > 0;
+    $exists = smart_school_get_result($stmt)->num_rows > 0;
     $stmt->close();
     return $exists;
 }
@@ -144,11 +144,11 @@ try {
 
         $stmt_att->bind_param('ss', $sid, $date);
         $stmt_att->execute();
-        $attendance = $stmt_att->get_result()->fetch_assoc();
+        $attendance = smart_school_get_result($stmt_att)->fetch_assoc();
 
         $stmt_leave->bind_param('ss', $sid, $date);
         $stmt_leave->execute();
-        if ($stmt_leave->get_result()->num_rows > 0) {
+        if (smart_school_get_result($stmt_leave)->num_rows > 0) {
             $on_leave_count++;
             continue;
         }

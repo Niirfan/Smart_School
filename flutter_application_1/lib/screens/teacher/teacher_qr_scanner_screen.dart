@@ -193,7 +193,12 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('สแกน QR Code เช็กชื่อ', style: GoogleFonts.prompt(fontWeight: FontWeight.bold)),
+        title: Text(
+          'สแกน QR Code เช็กชื่อ',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.prompt(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on, color: Colors.amber),
@@ -233,12 +238,17 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
                               color: _scanType == 'in' ? Colors.white : AppColors.textSecondary,
                             ),
                             const SizedBox(width: 8),
-                            Text(
+                            Flexible(
+                              child: Text(
                               'เช็กชื่อเข้าโรงเรียน',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.prompt(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: _scanType == 'in' ? Colors.white : AppColors.textSecondary,
+                              ),
                               ),
                             ),
                           ],
@@ -264,12 +274,17 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
                               color: _scanType == 'out' ? Colors.white : AppColors.textSecondary,
                             ),
                             const SizedBox(width: 8),
-                            Text(
+                            Flexible(
+                              child: Text(
                               'เช็กชื่อออกโรงเรียน',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.prompt(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: _scanType == 'out' ? Colors.white : AppColors.textSecondary,
+                              ),
                               ),
                             ),
                           ],
@@ -340,12 +355,16 @@ class _TeacherQrScannerScreenState extends State<TeacherQrScannerScreen> {
                         children: [
                           const Icon(Icons.edit_note, size: 20, color: AppColors.primaryNavy),
                           const SizedBox(width: 8),
-                          Text(
+                          Expanded(
+                            child: Text(
                             'กรอกรหัสนักเรียนแทน (กรณีสแกนบัตรไม่ได้)',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.prompt(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
+                            ),
                             ),
                           ),
                         ],

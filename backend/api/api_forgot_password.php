@@ -37,7 +37,7 @@ try {
     }
     $check->bind_param("s", $student_id);
     $check->execute();
-    $res = $check->get_result();
+    $res = smart_school_get_result($check);
 
     if ($res->num_rows === 0) {
         echo json_encode([

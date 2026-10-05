@@ -41,7 +41,7 @@ try {
     }
     $stmt->bind_param("s", $student_id);
     $stmt->execute();
-    $student_res = $stmt->get_result();
+    $student_res = smart_school_get_result($stmt);
 
     if ($student_res->num_rows === 0) {
         echo json_encode([
@@ -64,7 +64,7 @@ try {
         if ($stmt_t) {
             $stmt_t->bind_param("s", $student_id);
             $stmt_t->execute();
-            $teacher_res = $stmt_t->get_result();
+            $teacher_res = smart_school_get_result($stmt_t);
             if ($teacher_res && $teacher_res->num_rows > 0) {
                 $teacher = $teacher_res->fetch_assoc();
             }
@@ -85,7 +85,7 @@ try {
         if ($grade_stmt) {
             $grade_stmt->bind_param("s", $student_id);
             $grade_stmt->execute();
-            $grade_res = $grade_stmt->get_result();
+            $grade_res = smart_school_get_result($grade_stmt);
 
             $total_credits = 0;
             $total_points = 0;
@@ -117,7 +117,7 @@ try {
         if ($att_stmt) {
             $att_stmt->bind_param("s", $student_id);
             $att_stmt->execute();
-            $att_res = $att_stmt->get_result();
+            $att_res = smart_school_get_result($att_stmt);
 
             while ($r = $att_res->fetch_assoc()) {
                 switch ($r['daily_status']) {
@@ -143,7 +143,7 @@ try {
         if ($beh_sum_stmt) {
             $beh_sum_stmt->bind_param("s", $student_id);
             $beh_sum_stmt->execute();
-            $beh_sum_res = $beh_sum_stmt->get_result()->fetch_assoc();
+            $beh_sum_res = smart_school_get_result($beh_sum_stmt)->fetch_assoc();
             $score_change = $beh_sum_res['total_change'] !== null ? floatval($beh_sum_res['total_change']) : 0.0;
             $current_conduct_score = round(max(0, min(100, 100 + $score_change)), 2);
         }
@@ -159,7 +159,7 @@ try {
         if ($beh_list_stmt) {
             $beh_list_stmt->bind_param("s", $student_id);
             $beh_list_stmt->execute();
-            $beh_list_res = $beh_list_stmt->get_result();
+            $beh_list_res = smart_school_get_result($beh_list_stmt);
             while ($b = $beh_list_res->fetch_assoc()) {
                 $recent_behaviors[] = [
                     'title' => $b['reason'] ?: 'บันทึกคะแนนความประพฤติ',
@@ -198,7 +198,7 @@ try {
             ");
             $time_stmt->bind_param("ss", $student_room, $day_of_week);
             $time_stmt->execute();
-            $time_res = $time_stmt->get_result();
+            $time_res = smart_school_get_result($time_stmt);
 
             $now_time = date('H:i:s');
             while ($sc = $time_res->fetch_assoc()) {
@@ -268,6 +268,8 @@ try {
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $e) {
+    http_response_code(500);
+    error_log('api_dashboard.php: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => 'เกิดข้อผิดพลาดเซิร์ฟเวอร์: ' . $e->getMessage()

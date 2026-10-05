@@ -55,9 +55,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Row(
                   children: [
                     const Text(
@@ -87,29 +88,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                Text(
-                  'Dashboard Scores • ${AcademicYearHelper.label()}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
+                  Text(
+                    'Dashboard Scores • ${AcademicYearHelper.label()}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('ไม่มีการแจ้งเตือนใหม่')),
-              );
-            },
-            icon: const Icon(Icons.notifications_none_outlined,
-                color: AppColors.textPrimary, size: 24),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: FutureBuilder<DashboardData>(
         future: _dashboardFuture,

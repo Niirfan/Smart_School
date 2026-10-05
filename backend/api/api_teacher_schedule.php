@@ -23,7 +23,7 @@ try {
     $teacher_stmt = $conn->prepare('SELECT teacher_id, name FROM teachers WHERE teacher_id = ? LIMIT 1');
     $teacher_stmt->bind_param('s', $teacher_id);
     $teacher_stmt->execute();
-    if ($teacher_stmt->get_result()->num_rows === 0) {
+    if (smart_school_get_result($teacher_stmt)->num_rows === 0) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'ไม่พบข้อมูลครู'], JSON_UNESCAPED_UNICODE);
         exit();
@@ -45,7 +45,7 @@ try {
     $now = date('H:i:s');
     $today = date('Y-m-d') === $date;
     $schedule = [];
-    $result = $stmt->get_result();
+    $result = smart_school_get_result($stmt);
     while ($row = $result->fetch_assoc()) {
         $status = 'normal';
         if ($today && $now >= $row['start_time'] && $now <= $row['end_time']) {

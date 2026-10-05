@@ -38,26 +38,32 @@ class ConductCard extends StatelessWidget {
         children: [
           // Header
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
+              Expanded(
+                child: Row(
+                  children: const [
                   Icon(
                     Icons.military_tech_outlined,
                     size: 20,
                     color: Color(0xFFD97706),
                   ),
                   SizedBox(width: 8),
-                  Text(
+                  Expanded(
+                    child: Text(
                     'คะแนนความประพฤติ',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    ),
                   ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -86,7 +92,8 @@ class ConductCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
+                Expanded(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -133,6 +140,7 @@ class ConductCard extends StatelessWidget {
                       ),
                     ],
                   ],
+                  ),
                 ),
                 Container(
                   width: 48,

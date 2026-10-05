@@ -568,9 +568,12 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(14.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
+            Row(
+              children: [
+              Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.primaryNavy.withValues(alpha: 0.08),
@@ -591,7 +594,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,10 +608,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 2,
                     children: [
                       const Icon(Icons.room, size: 13, color: AppColors.textMuted),
-                      const SizedBox(width: 3),
                       Text(
                         'ห้อง ${item.room}',
                         style: GoogleFonts.prompt(
@@ -617,7 +621,6 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                         ),
                       ),
                       if (item.subjectCode != null && item.subjectCode!.isNotEmpty) ...[
-                        const SizedBox(width: 8),
                         Text(
                           '(${item.subjectCode})',
                           style: GoogleFonts.prompt(
@@ -632,7 +635,12 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 ],
               ),
             ),
-            ElevatedButton(
+              ],
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
               onPressed: () {
                 if (widget.onNavigateToTab != null) {
                   widget.onNavigateToTab!(TeacherTab.subjectAttendance); // ไปหน้าเช็กชื่อ
@@ -648,6 +656,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               child: Text(
                 'เช็กชื่อ',
                 style: GoogleFonts.prompt(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
               ),
             ),
           ],
