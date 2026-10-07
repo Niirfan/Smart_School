@@ -170,7 +170,7 @@ class _TeacherConductScreenState extends State<TeacherConductScreen> {
                   child: Icon(positive ? Icons.add : Icons.remove, color: positive ? AppColors.success : AppColors.danger),
                 ),
                 title: Text('${item.pointsChange >= 0 ? '+' : ''}${item.pointsChange} คะแนน', style: GoogleFonts.prompt(fontWeight: FontWeight.bold)),
-                subtitle: Text('${item.title}\n${item.studentId ?? ''}', style: GoogleFonts.prompt(fontSize: 12)),
+                subtitle: Text('${item.title}\n${item.studentId}', style: GoogleFonts.prompt(fontSize: 12)),
                 isThreeLine: true,
                 trailing: Text(item.date, style: GoogleFonts.prompt(fontSize: 11, color: AppColors.textMuted)),
               ),

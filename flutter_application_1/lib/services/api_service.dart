@@ -717,20 +717,4 @@ class ApiService {
       throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
     }
   }
-
-  /// ดึงรายการแจ้งเตือนของนักเรียน
-  static Future<List<Map<String, dynamic>>> getNotifications({required String studentId}) async {
-    final url = '$baseUrl/api_notifications.php?student_id=${Uri.encodeComponent(studentId)}';
-    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      if (json['success'] == true && json['notifications'] != null) {
-        return List<Map<String, dynamic>>.from(json['notifications']);
-      }
-      return [];
-    } else {
-      throw Exception('เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${response.statusCode}');
-    }
-  }
 }

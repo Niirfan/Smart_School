@@ -1,0 +1,32 @@
+# Crash logs & Windows artifacts
+debug.log
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS artifacts
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary / dump files
+*.tmp
+*.bak
+*.log
+
+# Flutter & Dart (covered inside flutter_application_1 as well)
+flutter_application_1/.dart_tool/
+flutter_application_1/build/
+flutter_application_1/.flutter-plugins-dependencies
+flutter_application_1/android/local.properties
+flutter_application_1/android/.gradle/

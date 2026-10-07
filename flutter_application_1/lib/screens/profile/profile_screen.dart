@@ -98,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () async {
                     Navigator.pop(ctx); // close dialog
                     await AuthSession.clear();
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     // ล้าง stack ทั้งหมด แล้วไปหน้า Login
                     Navigator.pushAndRemoveUntil(
                       context,
